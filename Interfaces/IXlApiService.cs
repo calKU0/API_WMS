@@ -2,7 +2,7 @@
 using APIWMS.Models.DTOs;
 using APIWMS.Models.ViewModels;
 
-namespace APIWMS.Services
+namespace APIWMS.Interfaces
 {
     public interface IXlApiService
     {

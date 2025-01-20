@@ -1,5 +1,6 @@
 using APIWMS.Data;
 using APIWMS.Helpers;
+using APIWMS.Interfaces;
 using APIWMS.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -19,11 +20,16 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DevelopmentConnectionString")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DevelopmentSQLConnection")));
 builder.Services.AddControllers();
+
+// App Services
 builder.Services.Configure<XlApiSettings>(builder.Configuration.GetSection("XlApiSettings"));
 builder.Services.AddSingleton<IXlApiService, XlApiService>();
+builder.Services.AddScoped<IDatabaseService, DatabaseService>();
+builder.Services.AddScoped<ILoggingService, LoggingService>();
 builder.Services.AddHostedService<LoginService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

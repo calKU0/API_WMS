@@ -18,6 +18,9 @@ namespace APIWMS.Data
             modelBuilder.Entity<ApiLog>()
                 .Property(e => e.CreatedDate)
                 .HasDefaultValueSql("GETDATE()");
+
+            // Zmiana default schema
+            modelBuilder.HasDefaultSchema("kkur");
         }
 
     }

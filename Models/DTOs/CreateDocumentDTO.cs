@@ -8,7 +8,11 @@ namespace APIWMS.Models.ViewModels
     public class CreateDocumentDTO
     {
         [Required]
-        public required DocumentType Type { get; set; }
+        public required int WmsId { get; set; }
+        [Required]
+        public required int WmsType { get; set; }
+        [Required]
+        public required DocumentType ErpType { get; set; }
         [Required]
         public required int SourceId { get; set; }
         [Required]

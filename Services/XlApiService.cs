@@ -1,5 +1,6 @@
 ﻿using APIWMS.Data.Enums;
 using APIWMS.Helpers;
+using APIWMS.Interfaces;
 using APIWMS.Models.DTOs;
 using APIWMS.Models.ViewModels;
 using cdn_api;
@@ -15,11 +16,13 @@ namespace APIWMS.Services
         [DllImport("ClaRUN.dll")]
         public static extern void AttachThreadToClarion(int _flag);
         private readonly IOptions<XlApiSettings> _config;
+        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<IXlApiService> _logger;
         private int _sessionId;
-        public XlApiService(IOptions<XlApiSettings> config, ILogger<IXlApiService> logger)
+        public XlApiService(IOptions<XlApiSettings> config, ILogger<IXlApiService> logger, IServiceProvider serviceProvider)
         {
             _config = config;
+            _serviceProvider = serviceProvider;
             _logger = logger;
         }
         public int Login()
@@ -59,7 +62,7 @@ namespace APIWMS.Services
             XLDokumentMagNagInfo_20241 xLDokumentMag = new()
             {
                 Wersja = _config.Value.ApiVersion,
-                Typ = (int)document.Type,
+                Typ = (int)document.ErpType,
                 Akronim = document.Client,
                 Magazyn = document.Wearhouse,
                 Opis = document.Description,
@@ -91,7 +94,7 @@ namespace APIWMS.Services
             {
                 foreach (var attribute in document.Attributes) 
                 {
-                    int addAttributeResult = AddAttribute(xLDokumentMag.GIDNumer, document.Type, attribute);
+                    int addAttributeResult = AddAttribute(xLDokumentMag.GIDNumer, document.ErpType, attribute);
                     if (addAttributeResult != 0)
                     {
                         errorMessage = addAttributeResult.ToString();
@@ -102,7 +105,7 @@ namespace APIWMS.Services
                 }
             }
 
-            int closeResult = CloseDocument(documentId, document.Type, document.Status);
+            int closeResult = CloseDocument(documentId, document.ErpType, document.Status);
             if (closeResult != 0)
             {
                 errorMessage = CheckError((int)ErrorCode.ZamknijDokumentMag, closeResult);
@@ -111,7 +114,7 @@ namespace APIWMS.Services
                 return errorMessage;
             }
 
-            int connectionResult = ConnectDocuments(xLDokumentMag.GIDNumer, document.Type, document.SourceId, document.SourceType, 3);
+            int connectionResult = ConnectDocuments(xLDokumentMag.GIDNumer, document.ErpType, document.SourceId, document.SourceType, 3);
             if (connectionResult != 0)
             {
                 errorMessage = CheckError((int)ErrorCode.ZepnijDokument, connectionResult);
@@ -120,6 +123,7 @@ namespace APIWMS.Services
                 return errorMessage;
             }
 
+            _logger.LogInformation($"Założono dokument WMSID: {document.WmsId}");
             ManageTransaction(1); // Potwierdzamy transakcje
             return errorMessage;
         }
@@ -127,33 +131,35 @@ namespace APIWMS.Services
         public string ModifyDocument(EditDocumentDTO document)
         {
             AttachThreadToClarion(1);
-            // TODO: Zmodyfikować atrybuty
 
-            ManageTransaction(0); // Otwieramy transakcje
             int documentId = 0;
             string errorMessage = String.Empty;
             int openErrorCode;
             int closeErrorCode;
 
-            if (document.Attributes?.Count >=1)
+            if (document.Attributes?.Count >= 1)
             {
-                foreach (var attribute in document.Attributes)
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    int addAtributeResult = AddAttribute(document.Id, document.Type, attribute);
-                    if (addAtributeResult != 0)
+                    var context = scope.ServiceProvider.GetRequiredService<IDatabaseService>();
+                    foreach (var attribute in document.Attributes)
                     {
-                        errorMessage = addAtributeResult.ToString();
-                        _logger.LogError($"Błąd dodawania atrybutu {attribute.Name} o wartości {attribute.Value} do dokumentu {documentId}. Błąd: {errorMessage}");
-                        ManageTransaction(2); // Zamykamy transakcje
-                        return errorMessage;
+                        int updateAttributeResult = context.UpdateAttribute(document, document.Attributes);
+                        if (updateAttributeResult <= 0)
+                        {
+                            _logger.LogError($"Błąd aktualizowania atrybutu {attribute.Name} o wartości {attribute.Value} na dokumencie o ERPID: {document.ErpId}");
+                            errorMessage = $"Błąd aktualizowania atrybutu {attribute.Name} o wartości {attribute.Value} na dokumencie o ERPID: {document.ErpId}";
+                            return errorMessage;
+                        }
+                        _logger.LogInformation($"Zaktualizowano atrybut '{attribute.Name}' o wartości {attribute.Value} na dokumencie o ERPID: {document.ErpId}");
                     }
                 }
             }
 
-
             if (!string.IsNullOrEmpty(document.Status))
             {
-                if (DocumentTypeGroups.DokHandlowy.Contains((DocumentType)document.Type))
+                ManageTransaction(0); // Otwieramy transakcje
+                if (DocumentTypeGroups.DokHandlowy.Contains((DocumentType)document.ErpType))
                 {
                     openErrorCode = (int)ErrorCode.OtworzDokumentHan;
                     closeErrorCode = (int)ErrorCode.ZamknijDokument;
@@ -164,23 +170,24 @@ namespace APIWMS.Services
                     closeErrorCode = (int)ErrorCode.ZamknijDokumentMag;
                 }
 
-                int openDocResult = OpenDocument(document.Id, document.Type, out documentId);
+                int openDocResult = OpenDocument(document.ErpId, document.ErpType, out documentId);
                 if (openDocResult != 0)
                 {
                     errorMessage = CheckError(openErrorCode, openDocResult);
-                    _logger.LogError($"Błąd otwierania dokumentu {errorMessage}");
+                    _logger.LogError($"Błąd otwierania dokumentu o ERPID {document.ErpId} : {errorMessage}");
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
 
-                int closeDocResult = CloseDocument(documentId, document.Type, document.Status);
+                int closeDocResult = CloseDocument(documentId, document.ErpType, document.Status);
                 if (closeDocResult != 0)
                 {
                     errorMessage = CheckError(closeErrorCode, closeDocResult);
-                    _logger.LogError($"Błąd zamykania dokumentu {errorMessage}");
+                    _logger.LogError($"Błąd zamykania dokumentu o ERPID: {document.ErpId}: {errorMessage}");
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
+                _logger.LogInformation($"Zaktualizowano status dokumentu o ERPID: {document.ErpId}");
             }
             ManageTransaction(1); // Potwierdzamy transakcje
             return errorMessage;

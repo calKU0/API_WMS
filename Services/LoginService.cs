@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using APIWMS.Data.Enums;
-using APIWMS.Services;
+using APIWMS.Interfaces;
 using Microsoft.Extensions.Hosting;
 
 public class LoginService : IHostedService
