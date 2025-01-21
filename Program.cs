@@ -5,6 +5,7 @@ using APIWMS.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Swashbuckle.AspNetCore.Newtonsoft;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,9 +20,13 @@ Log.Logger = new LoggerConfiguration()
     ).CreateLogger();
 
 builder.Host.UseSerilog();
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DevelopmentSQLConnection")));
-builder.Services.AddControllers();
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DevelopmentSQLConnection")));
+builder.Services.AddControllers()
+    .AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+    });
+builder.Services.AddSwaggerGenNewtonsoftSupport();
 
 // App Services
 builder.Services.Configure<XlApiSettings>(builder.Configuration.GetSection("XlApiSettings"));
@@ -36,6 +41,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "APIWMS", Version = "v1" });
+
     // Custom order
     c.DocumentFilter<CustomTagOrderFilter>();
 });
