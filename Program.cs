@@ -3,12 +3,12 @@ using APIWMS.Helpers;
 using APIWMS.Interfaces;
 using APIWMS.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.File(
@@ -16,7 +16,7 @@ Log.Logger = new LoggerConfiguration()
         rollingInterval: RollingInterval.Day,
         retainedFileCountLimit: 31,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level}] {Message}{NewLine}{Exception}"
-        ).CreateLogger();
+    ).CreateLogger();
 
 builder.Host.UseSerilog();
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -31,7 +31,14 @@ builder.Services.AddScoped<ILoggingService, LoggingService>();
 builder.Services.AddHostedService<LoginService>();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// Swagger
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "APIWMS", Version = "v1" });
+    // Custom order
+    c.DocumentFilter<CustomTagOrderFilter>();
+});
 
 var app = builder.Build();
 
@@ -43,9 +50,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
