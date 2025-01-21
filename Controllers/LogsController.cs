@@ -27,7 +27,7 @@ namespace APIWMS.Controllers
             return Ok(_context.ApiLogs.ToList());
         }
 
-        [Route("GetLog/{entityId}/{entityType}")]
+        [Route("GetLog")]
         [HttpGet]
         public ActionResult<ApiLog> GetLog(int entityId, int entityType, string Source)
         {
@@ -36,11 +36,11 @@ namespace APIWMS.Controllers
             if (Source != "WMS" && Source != "ERP")
                 return BadRequest();
 
-            ApiLog log;
+            List<ApiLog> log;
             if (Source == "ERP")
-                log = _context.ApiLogs.FirstOrDefault(i => i.EntityErpId == entityId && i.EntityErpType == entityType);
+                log = _context.ApiLogs.Where(i => i.EntityErpId == entityId && i.EntityErpType == entityType).ToList();
             else
-                log = _context.ApiLogs.FirstOrDefault(i => i.EntityWmsId == entityId && i.EntityWmsType == entityType);
+                log = _context.ApiLogs.Where(i => i.EntityWmsId == entityId && i.EntityWmsType == entityType).ToList();
 
             if (log == null)
                 return NotFound();

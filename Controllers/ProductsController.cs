@@ -32,28 +32,28 @@ namespace APIWMS.Controllers
 
             if (!ModelState.IsValid)
             {
-                await LogErrorAsync(actionName, "Nieprawidłowy stan modelu.", product.ErpId, productType);
+                await LogErrorAsync(actionName, "Nieprawidłowy stan modelu.", product.ErpId, productType, product.WmsId);
                 return BadRequest(ModelState);
             }
 
-            if (product.Attributes == null && product.Ean == null && product.Volume == null && product.WageNetto == null && product.WageBrutto == null)
+            if (product.Attributes == null && product.Ean == null && product.Volume == null && product.WeightNetto == null && product.WeightBrutto == null)
             {
                 const string errorMessage = "Brak danych do aktualizacji. Przekaż przynajmniej jedno pole do zaktualizowania.";
-                await LogErrorAsync(actionName, errorMessage, product.ErpId, productType);
+                await LogErrorAsync(actionName, errorMessage, product.ErpId, productType, product.WmsId);
                 return BadRequest(new { Message = errorMessage });
             }
 
-            if (OnlyOneIsNull(product.WageBrutto, product.WageNetto))
+            if (OnlyOneIsNull(product.WeightBrutto, product.WeightNetto))
             {
                 const string errorMessage = "Podczas aktualizacji Wagi należy przekazać zarówno WageNetto, jak i WageBrutto.";
-                await LogErrorAsync(actionName, errorMessage, product.ErpId, productType);
+                await LogErrorAsync(actionName, errorMessage, product.ErpId, productType, product.WmsId);
                 return BadRequest(new { Message = errorMessage });
             }
 
             if (OnlyOneIsNull(product.Volume, product.VolumeUnit))
             {
                 const string errorMessage = "Podczas aktualizacji objętości należy przekazać zarówno VolumeUnit, jak i Volume.";
-                await LogErrorAsync(actionName, errorMessage, product.ErpId, productType);
+                await LogErrorAsync(actionName, errorMessage, product.ErpId, productType, product.WmsId);
                 return BadRequest(new { Message = errorMessage });
             }
 
@@ -62,36 +62,39 @@ namespace APIWMS.Controllers
                 var updateResults = new List<string>();
 
                 int rowsAffected = _databaseService.UpdateProduct(product);
-                updateResults.Add(rowsAffected > 0 ? "Towar zaktualizowany pomyślnie." : "Nie udało się zaktualizować towaru.");
+                updateResults.Add(rowsAffected > 0 ? "Dane towaru zaktualizowane pomyślnie." : "Nie udało się zaktualizować danych towaru.");
 
                 if (product.Attributes != null)
                 {
-                    int attributesRowsAffected = _databaseService.UpdateAttribute(product, product.Attributes);
-                    updateResults.Add(attributesRowsAffected > 0 ? "Atrybuty towaru zaktualizowane pomyślnie." : "Nie udało się zaktualizować atrybutów towaru.");
+                    var failedAttributes = _databaseService.UpdateAttribute(product, product.Attributes);
+
+                    if (failedAttributes.Any())
+                        updateResults.AddRange(failedAttributes.Select(attr => $"Nie udało się zaktualizować atrybutu: {attr}."));
+                    else
+                        updateResults.Add("Atrybuty towaru zaktualizowane pomyślnie.");
                 }
 
-                if (updateResults.Any(result => result.Contains("Nie udało się")))
+                var failedUpdates = updateResults.Where(result => result.Contains("Nie udało się")).ToList();
+
+                if (failedUpdates.Any())
                 {
-                    foreach (var row in updateResults.Where(result => result.Contains("Nie udało się")))
-                    {
-                        await LogErrorAsync(actionName, $"Błąd przy próbie aktualizacji towaru: {row}", product.ErpId, productType);
-                    }
+                    foreach (var failure in failedUpdates)
+                        await LogErrorAsync(actionName, $"Błąd przy próbie aktualizacji towaru: {failure}", product.ErpId, productType, product.WmsId);
                     return BadRequest(new { Message = "Wystąpił błąd podczas aktualizacji towaru.", Results = updateResults });
                 }
 
-                await LogSuccessAsync(actionName, product.ErpId, productType);
+
+                await LogSuccessAsync(actionName, product.ErpId, productType, product.WmsId);
                 _logger.LogInformation("Zaktualizowano towar o ERPID {ProductId}: {Results}", product.ErpId, updateResults);
                 return Ok(new { Message = "Towar zaktualizowany pomyślnie.", Results = updateResults });
             }
             catch (Exception ex)
             {
                 const string errorMessage = "Wystąpił niezidentyfikowany błąd przy próbie aktualizacji danych towaru.";
-                await _loggingService.LogErrorAsync(action: actionName, success: false, errorMessage: errorMessage,
-                    fields: new Dictionary<string, int> { { "EntityErpId", product.ErpId }, { "EntityErpType", productType } },
-                    ex: ex
-                );
+                await LogErrorAsync(actionName, errorMessage, product.ErpId, productType, product.WmsId, ex);
                 return StatusCode(500, new { Message = "Wystąpił nieoczekiwany błąd." });
             }
+
         }
 
         private bool OnlyOneIsNull(object value1, object value2)
@@ -99,18 +102,15 @@ namespace APIWMS.Controllers
             return (value1 == null && value2 != null) || (value1 != null && value2 == null);
         }
 
-        private async Task LogErrorAsync(string actionName, string errorMessage, int erpId, int erpType)
+        private async Task LogErrorAsync(string actionName, string errorMessage, int erpId, int type, int wmsId, Exception ex = null)
         {
-            await _loggingService.LogErrorAsync(action: actionName, success: false, errorMessage: errorMessage,
-                fields: new Dictionary<string, int> { { "EntityErpId", erpId }, { "EntityErpType", erpType } }
-            );
+            await _loggingService.LogErrorAsync(actionName, false, errorMessage, new Dictionary<string, int> { { "EntityErpId", erpId }, { "EntityErpType", type }, { "EntityWmsId", wmsId }, { "EntityWmsType", type } }, ex);
+            _logger.LogError(ex, errorMessage);
         }
 
-        private async Task LogSuccessAsync(string actionName, int erpId, int erpType)
+        private async Task LogSuccessAsync(string actionName, int erpId, int type, int wmsId)
         {
-            await _loggingService.LogErrorAsync(actionName, true, null,
-                fields: new Dictionary<string, int> { { "EntityErpId", erpId }, { "EntityErpType", erpType } }
-            );
+            await _loggingService.LogErrorAsync(actionName, true, null, new Dictionary<string, int> { { "EntityErpId", erpId }, { "EntityErpType", type }, { "EntityWmsId", wmsId }, { "EntityWmsType", type } });
         }
     }
 }

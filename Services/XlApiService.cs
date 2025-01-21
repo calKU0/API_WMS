@@ -1,10 +1,12 @@
 ﻿using APIWMS.Data.Enums;
 using APIWMS.Helpers;
 using APIWMS.Interfaces;
+using APIWMS.Models;
 using APIWMS.Models.DTOs;
 using APIWMS.Models.ViewModels;
 using cdn_api;
 using Microsoft.Extensions.Options;
+using System;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
@@ -73,7 +75,6 @@ namespace APIWMS.Services
             if (createResult != 0 || documentId == 0)
             {
                 errorMessage = CheckError((int)ErrorCode.NowyDokumentMag, createResult);
-                _logger.LogError($"Błąd przy tworzeniu dokumentu: {errorMessage}");
                 ManageTransaction(2); // Zamykamy transakcje
                 return errorMessage;
             }
@@ -83,7 +84,6 @@ namespace APIWMS.Services
                 if (productResult != 0) 
                 {
                     errorMessage = CheckError((int)ErrorCode.DodajPozycjeMag, productResult);
-                    _logger.LogError($"Błąd dodawaniu produktu {product.Code} Błąd: {errorMessage}" );
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
@@ -97,8 +97,7 @@ namespace APIWMS.Services
                     int addAttributeResult = AddAttribute(xLDokumentMag.GIDNumer, document.ErpType, attribute);
                     if (addAttributeResult != 0)
                     {
-                        errorMessage = addAttributeResult.ToString();
-                        _logger.LogError($"Błąd dodawania atrybutu {attribute.Name} o wartości {attribute.Value} do dokumentu {documentId}. Błąd: {errorMessage}");
+                        errorMessage = $"Wystąpił błąd podczas dodawania atrybutu {addAttributeResult}";
                         ManageTransaction(2); // Zamykamy transakcje
                         return errorMessage;
                     }
@@ -109,7 +108,6 @@ namespace APIWMS.Services
             if (closeResult != 0)
             {
                 errorMessage = CheckError((int)ErrorCode.ZamknijDokumentMag, closeResult);
-                _logger.LogError($"Błąd zamykania dokumentu {errorMessage}");
                 ManageTransaction(2); // Zamykamy transakcje
                 return errorMessage;
             }
@@ -118,7 +116,6 @@ namespace APIWMS.Services
             if (connectionResult != 0)
             {
                 errorMessage = CheckError((int)ErrorCode.ZepnijDokument, connectionResult);
-                _logger.LogError($"Błąd podczas spinania dokumentów handlowych z magazynowymi. Błąd: {errorMessage}");
                 ManageTransaction(2); // Zamykamy transakcje
                 return errorMessage;
             }
@@ -136,25 +133,6 @@ namespace APIWMS.Services
             string errorMessage = String.Empty;
             int openErrorCode;
             int closeErrorCode;
-
-            if (document.Attributes?.Count >= 1)
-            {
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var context = scope.ServiceProvider.GetRequiredService<IDatabaseService>();
-                    foreach (var attribute in document.Attributes)
-                    {
-                        int updateAttributeResult = context.UpdateAttribute(document, document.Attributes);
-                        if (updateAttributeResult <= 0)
-                        {
-                            _logger.LogError($"Błąd aktualizowania atrybutu {attribute.Name} o wartości {attribute.Value} na dokumencie o ERPID: {document.ErpId}");
-                            errorMessage = $"Błąd aktualizowania atrybutu {attribute.Name} o wartości {attribute.Value} na dokumencie o ERPID: {document.ErpId}";
-                            return errorMessage;
-                        }
-                        _logger.LogInformation($"Zaktualizowano atrybut '{attribute.Name}' o wartości {attribute.Value} na dokumencie o ERPID: {document.ErpId}");
-                    }
-                }
-            }
 
             if (!string.IsNullOrEmpty(document.Status))
             {
@@ -174,21 +152,41 @@ namespace APIWMS.Services
                 if (openDocResult != 0)
                 {
                     errorMessage = CheckError(openErrorCode, openDocResult);
-                    _logger.LogError($"Błąd otwierania dokumentu o ERPID {document.ErpId} : {errorMessage}");
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
 
                 int closeDocResult = CloseDocument(documentId, document.ErpType, document.Status);
+                Console.WriteLine(closeDocResult);
                 if (closeDocResult != 0)
                 {
                     errorMessage = CheckError(closeErrorCode, closeDocResult);
-                    _logger.LogError($"Błąd zamykania dokumentu o ERPID: {document.ErpId}: {errorMessage}");
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
                 _logger.LogInformation($"Zaktualizowano status dokumentu o ERPID: {document.ErpId}");
             }
+
+            if (document.Attributes?.Count >= 1)
+            {
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<IDatabaseService>();
+
+                    var failedAttributes = context.UpdateAttribute(document, document.Attributes);
+
+                    if (failedAttributes.Count != 0)
+                    {
+                        foreach (var failedAttribute in failedAttributes)
+                        {
+                            errorMessage = $"Błąd aktualizowania atrybutu {failedAttribute} na dokumencie o ERPID: {document.ErpId}";
+                            return errorMessage;
+                        }
+                    }
+                    _logger.LogInformation($"Zaktualizowano atrybuty na dokumencie o ERPID: {document.ErpId}");
+                }
+            }
+
             ManageTransaction(1); // Potwierdzamy transakcje
             return errorMessage;
 
@@ -236,7 +234,7 @@ namespace APIWMS.Services
                 XLZamkniecieDokumentuInfo_20241 xLZamkniecieDokumentu = new()
                 {
                     Wersja = _config.Value.ApiVersion,
-                    Tryb = Convert.ToInt16(status)
+                    Tryb = Convert.ToInt32(status)
                 };
                 result = cdn_api.cdn_api.XLZamknijDokument(documentId, xLZamkniecieDokumentu);
             }
@@ -245,7 +243,7 @@ namespace APIWMS.Services
                 XLZamkniecieDokumentuMagInfo_20241 xLZamkniecieDokumentuMag = new()
                 {
                     Wersja = _config.Value.ApiVersion,
-                    Tryb = Convert.ToInt16(status)
+                    Tryb = Convert.ToInt32(status)
                 };
                 result = cdn_api.cdn_api.XLZamknijDokumentMag(documentId, xLZamkniecieDokumentuMag);
             }

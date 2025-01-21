@@ -97,7 +97,6 @@ namespace APIWMS.Controllers
             catch (Exception ex)
             {
                 await LogErrorAsync(action, "Wystąpił nieoczekiwany błąd.", document, ex);
-                _logger.LogError(ex, $"Wystąpił nieoczekiwany błąd {ex}");
                 return StatusCode(500, new { Message = "Wystąpił nieoczekiwany błąd." });
             }
         }
@@ -119,6 +118,7 @@ namespace APIWMS.Controllers
                 logFields.Add("entityerptype", (int)editDocument.ErpType);
             }
 
+            _logger.LogError(ex, message);
             await _loggingService.LogErrorAsync(action, false, message, logFields, ex);
         }
 
