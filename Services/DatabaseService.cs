@@ -37,11 +37,13 @@ public class DatabaseService : IDatabaseService
                         "EXEC kkur.UpdateAttribute @ObjectId = {0}, @ObjectType = {1}, @Class = {2}, @Value = {3}",
                         document.ErpId, document.ErpType, attribute.Name, attribute.Value);
                 }
+                else
+                {
+                    throw new ArgumentException("Unsupported object type", nameof(obj));
+                }
 
                 if (rowsUpdated == 0)
-                {
                     failedUpdates.Add(attribute.Name); 
-                }
             }
             catch (Exception ex)
             {
@@ -56,7 +58,7 @@ public class DatabaseService : IDatabaseService
     public int UpdateProduct(Product product)
     {
         return _context.Database.ExecuteSqlRaw(
-        "EXEC kkur.UpdateProduct @ProductId = {0}, @Ean = {1}, @WageNetto = {2}, @WageBrutto = {3}, @Volume = {4}, @VolumeUnit = {5}",
+        "EXEC kkur.UpdateProduct @ProductId = {0}, @Ean = {1}, @WeightNetto = {2}, @WeightBrutto = {3}, @Volume = {4}, @VolumeUnit = {5}",
         product.ErpId, product.Ean, product.WeightNetto, product.WeightBrutto, product.Volume, product.VolumeUnit);
     }
 
