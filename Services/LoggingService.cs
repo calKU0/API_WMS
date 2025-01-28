@@ -20,7 +20,8 @@ namespace APIWMS.Services
             {
                 Action = action,
                 Success = success,
-                ErrorMessage = errorMessage
+                ErrorMessage = errorMessage,
+                Flow = "IN"
             };
 
             if (fields != null)
