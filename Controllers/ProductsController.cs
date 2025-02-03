@@ -25,34 +25,27 @@ namespace APIWMS.Controllers
 
         [Route("UpdateProduct")]
         [HttpPost]
-        public async Task<IActionResult> UpdateProduct(Product product)
+        public async Task<ActionResult> UpdateProduct(Product product)
         {
             const string actionName = "UpdateProduct";
             const int productType = 16;
 
             if (!ModelState.IsValid)
             {
-                await LogErrorAsync(actionName, "Nieprawidłowy stan modelu.", product.ErpId, productType, product.WmsId);
+                await LogErrorAsync(actionName, "Invalid model struvture passed.", product.ErpId, productType, product.WmsId);
                 return BadRequest(ModelState);
             }
 
-            if (product.Attributes == null && product.Ean == null && product.Volume == null && product.WeightNetto == null && product.WeightBrutto == null)
+            if (product.Attributes == null && product.Ean == null && product.Volume == null && product.Weight == null)
             {
-                const string errorMessage = "Brak danych do aktualizacji. Przekaż przynajmniej jedno pole do zaktualizowania.";
-                await LogErrorAsync(actionName, errorMessage, product.ErpId, productType, product.WmsId);
-                return BadRequest(new { Message = errorMessage });
-            }
-
-            if (OnlyOneIsNull(product.WeightBrutto, product.WeightNetto))
-            {
-                const string errorMessage = "Podczas aktualizacji Wagi należy przekazać zarówno WageNetto, jak i WageBrutto.";
+                const string errorMessage = "No data to update. Pass at least one value.";
                 await LogErrorAsync(actionName, errorMessage, product.ErpId, productType, product.WmsId);
                 return BadRequest(new { Message = errorMessage });
             }
 
             if (OnlyOneIsNull(product.Volume, product.VolumeUnit))
             {
-                const string errorMessage = "Podczas aktualizacji objętości należy przekazać zarówno VolumeUnit, jak i Volume.";
+                const string errorMessage = "When updating volume, Volume Unit is required";
                 await LogErrorAsync(actionName, errorMessage, product.ErpId, productType, product.WmsId);
                 return BadRequest(new { Message = errorMessage });
             }
@@ -61,38 +54,42 @@ namespace APIWMS.Controllers
             {
                 var updateResults = new List<string>();
 
-                int rowsAffected = _databaseService.UpdateProduct(product);
-                updateResults.Add(rowsAffected > 0 ? "Dane towaru zaktualizowane pomyślnie." : "Nie udało się zaktualizować danych towaru.");
+                int rowsAffected = await _databaseService.UpdateProduct(product);
 
                 if (product.Attributes != null)
                 {
-                    var failedAttributes = _databaseService.UpdateAttribute(product, product.Attributes);
+                    var failedAttributes = await _databaseService.UpdateAttributes(product.ErpId, 16, 0, product.Attributes);
 
-                    if (failedAttributes.Any())
-                        updateResults.AddRange(failedAttributes.Select(attr => $"Nie udało się zaktualizować atrybutu: {attr}."));
-                    else
-                        updateResults.Add("Atrybuty towaru zaktualizowane pomyślnie.");
+                    if (failedAttributes.Count > 1)
+                        updateResults.AddRange(failedAttributes.Select(attr => $"Error when updating attribute: '{attr}'."));
                 }
 
-                var failedUpdates = updateResults.Where(result => result.Contains("Nie udało się")).ToList();
+                if (product.AdditionalUnits != null)
+                {
+                    var failedUnits = await _databaseService.UpdateProductUnits(product.ErpId, product.AdditionalUnits);
 
-                if (failedUpdates.Any())
+                    if (failedUnits.Count > 0)
+                        updateResults.AddRange(failedUnits.Select(jm => $"Error when updating unit: '{jm}'."));
+                }
+
+                var failedUpdates = updateResults.Where(result => result.Contains("Error")).ToList();
+
+                if (failedUpdates.Count > 0)
                 {
                     foreach (var failure in failedUpdates)
-                        await LogErrorAsync(actionName, $"Błąd przy próbie aktualizacji towaru: {failure}", product.ErpId, productType, product.WmsId);
-                    return BadRequest(new { Message = "Wystąpił błąd podczas aktualizacji towaru.", Results = updateResults });
+                        await LogErrorAsync(actionName, $"Error when updating product: {failure}", product.ErpId, productType, product.WmsId);
+                    return BadRequest(new { Message = "Error when updating product.", Results = updateResults });
                 }
 
-
                 await LogSuccessAsync(actionName, product.ErpId, productType, product.WmsId);
-                _logger.LogInformation("Zaktualizowano towar o ERPID {ProductId}: {Results}", product.ErpId, updateResults);
-                return Ok(new { Message = "Towar zaktualizowany pomyślnie.", Results = updateResults });
+                _logger.LogInformation("Modified product with ERPID {ProductId}: {Results}", product.ErpId, updateResults);
+                return Ok(new { product, Message = "Product modified." });
             }
             catch (Exception ex)
             {
-                const string errorMessage = "Wystąpił niezidentyfikowany błąd przy próbie aktualizacji danych towaru.";
+                const string errorMessage = "Unexpected error occured when trying to modify product.";
                 await LogErrorAsync(actionName, errorMessage, product.ErpId, productType, product.WmsId, ex);
-                return StatusCode(500, new { Message = "Wystąpił nieoczekiwany błąd." });
+                return StatusCode(500, new { Message = "Enexpected error occured" });
             }
 
         }

@@ -35,7 +35,8 @@ namespace APIWMS.Services
                 ProgramID = _config.Value.ProgramName,
                 Baza = _config.Value.Database,
                 OpeIdent = _config.Value.Username,
-                OpeHaslo = _config.Value.Password
+                OpeHaslo = _config.Value.Password,
+                TrybWsadowy = 1
             };
 
             int result = cdn_api.cdn_api.XLLogin(xLLoginInfo, ref _sessionId);
@@ -68,6 +69,7 @@ namespace APIWMS.Services
                 Akronim = document.Client,
                 Magazyn = document.Wearhouse,
                 Opis = document.Description,
+                Cecha = document.WmsName,
             };
 
             int createResult = cdn_api.cdn_api.XLNowyDokumentMag(_sessionId, ref documentId, xLDokumentMag);
@@ -78,33 +80,33 @@ namespace APIWMS.Services
                 ManageTransaction(2); // Zamykamy transakcje
                 return errorMessage;
             }
-            foreach (var product in document.Products) 
-            { 
+            foreach (var product in document.Products)
+            {
                 int productResult = AddProductToDocument(documentId, product);
-                if (productResult != 0) 
+                if (productResult != 0)
                 {
                     errorMessage = CheckError((int)ErrorCode.DodajPozycjeMag, productResult);
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
-                _logger.LogInformation($"Dodano produkt {product.Code} do dokumentu");
+                _logger.LogInformation($"Added product {product.Code} to document {document.WmsName}.");
             }
 
             if (document.Attributes?.Count >= 1)
             {
-                foreach (var attribute in document.Attributes) 
+                foreach (var attribute in document.Attributes)
                 {
-                    int addAttributeResult = AddAttribute(xLDokumentMag.GIDNumer, document.ErpType, attribute);
+                    int addAttributeResult = AddAttribute(xLDokumentMag.GIDNumer, (int)document.ErpType, 0, attribute);
                     if (addAttributeResult != 0)
                     {
-                        errorMessage = $"Wystąpił błąd podczas dodawania atrybutu {addAttributeResult}";
+                        errorMessage = $"Error when adding attribute {attribute.Name} with value {attribute.Value} to document {document.WmsName}";
                         ManageTransaction(2); // Zamykamy transakcje
                         return errorMessage;
                     }
                 }
             }
 
-            int closeResult = CloseDocument(documentId, document.ErpType, document.Status);
+            int closeResult = CloseDocument(documentId, document.ErpType, document.Status.ToString());
             if (closeResult != 0)
             {
                 errorMessage = CheckError((int)ErrorCode.ZamknijDokumentMag, closeResult);
@@ -120,12 +122,12 @@ namespace APIWMS.Services
                 return errorMessage;
             }
 
-            _logger.LogInformation($"Założono dokument WMSID: {document.WmsId}");
+            _logger.LogInformation($"Added document with WMSName: {document.WmsName} ({document.WmsId})");
             ManageTransaction(1); // Potwierdzamy transakcje
             return errorMessage;
         }
 
-        public string ModifyDocument(EditDocumentDTO document)
+        public async Task<string> ModifyDocument(EditDocumentDTO document)
         {
             AttachThreadToClarion(1);
 
@@ -134,7 +136,7 @@ namespace APIWMS.Services
             int openErrorCode;
             int closeErrorCode;
 
-            if (!string.IsNullOrEmpty(document.Status))
+            if (!string.IsNullOrEmpty(document.Status.ToString()))
             {
                 ManageTransaction(0); // Otwieramy transakcje
                 if (DocumentTypeGroups.DokHandlowy.Contains((DocumentType)document.ErpType))
@@ -156,7 +158,7 @@ namespace APIWMS.Services
                     return errorMessage;
                 }
 
-                int closeDocResult = CloseDocument(documentId, document.ErpType, document.Status);
+                int closeDocResult = CloseDocument(documentId, document.ErpType, document.Status.ToString());
                 Console.WriteLine(closeDocResult);
                 if (closeDocResult != 0)
                 {
@@ -164,7 +166,7 @@ namespace APIWMS.Services
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
-                _logger.LogInformation($"Zaktualizowano status dokumentu o ERPID: {document.ErpId}");
+                _logger.LogInformation($"Updated document status ERPID: {document.ErpId}");
             }
 
             if (document.Attributes?.Count >= 1)
@@ -173,17 +175,17 @@ namespace APIWMS.Services
                 {
                     var context = scope.ServiceProvider.GetRequiredService<IDatabaseService>();
 
-                    var failedAttributes = context.UpdateAttribute(document, document.Attributes);
+                    var failedAttributes = await context.UpdateAttributes(document.ErpId, (int)document.ErpType, 0, document.Attributes);
 
                     if (failedAttributes.Count != 0)
                     {
                         foreach (var failedAttribute in failedAttributes)
                         {
-                            errorMessage = $"Błąd aktualizowania atrybutu {failedAttribute} na dokumencie o ERPID: {document.ErpId}";
+                            errorMessage = $"Error updating attribute {failedAttribute} on document with ERPID: {document.ErpId}";
                             return errorMessage;
                         }
                     }
-                    _logger.LogInformation($"Zaktualizowano atrybuty na dokumencie o ERPID: {document.ErpId}");
+                    _logger.LogInformation($"Updated attributes on document with ERPID: {document.ErpId}");
                 }
             }
 
@@ -192,7 +194,7 @@ namespace APIWMS.Services
 
         }
 
-        public int OpenDocument(int documentErpId, DocumentType documentType, out int documentId)
+        private int OpenDocument(int documentErpId, DocumentType documentType, out int documentId)
         {
             int result = -1;
             documentId = 0;
@@ -226,7 +228,7 @@ namespace APIWMS.Services
             return result;
         }
 
-        public int CloseDocument(int documentId, DocumentType type, string status)
+        private int CloseDocument(int documentId, DocumentType type, string status)
         {
             int result = -1;
             if (DocumentTypeGroups.DokHandlowy.Contains(type))
@@ -250,26 +252,27 @@ namespace APIWMS.Services
             return result;
         }
 
-        public int AddAttribute(int obiNumer, DocumentType obiType, Models.Attribute attribute)
+        public int AddAttribute(int obiNumer, int obiType, int obiLp, Models.Attribute attribute)
         {
+            AttachThreadToClarion(1);
             XLAtrybutInfo_20241 xLAtrybut = new()
             {
                 Wersja = _config.Value.ApiVersion,
                 Klasa = attribute.Name,
                 Wartosc = attribute.Value,
-                GIDTyp = (int)obiType,
                 GIDNumer = obiNumer,
-                GIDLp = 0,
+                GIDTyp = obiType,
+                GIDLp = obiLp,
                 GIDSubLp = 0,
-                GIDFirma = 449892
+                GIDFirma = 449892,
             };
 
             int result = cdn_api.cdn_api.XLDodajAtrybut(_sessionId, xLAtrybut);
-            
+
             return result;
         }
 
-        public int AddProductToDocument(int documentId, AddProductToDocumentDTO product)
+        private int AddProductToDocument(int documentId, AddProductToDocumentDTO product)
         {
             XLDokumentMagElemInfo_20241 xLDokumentMagElem = new()
             {
@@ -282,7 +285,7 @@ namespace APIWMS.Services
             return result;
         }
 
-        public string CheckError(int function, int errorCode)
+        private string CheckError(int function, int errorCode)
         {
             XLKomunikatInfo_20241 xLKomunikat = new()
             {
@@ -297,11 +300,9 @@ namespace APIWMS.Services
                 return xLKomunikat.OpisBledu;
             else
                 return $"Error while checking error. Error code: {result}";
-
-
         }
 
-        public int ConnectDocuments(int documentId1, DocumentType documentType1, int documentId2, DocumentType documentType2, int connectionType)
+        private int ConnectDocuments(int documentId1, DocumentType documentType1, int documentId2, DocumentType documentType2, int connectionType)
         {
             XLDokSpiDokInfo_20241 xLDokSpi = new()
             {
@@ -321,7 +322,7 @@ namespace APIWMS.Services
             return result;
         }
 
-        public int ManageTransaction(int type, string token = "")
+        private int ManageTransaction(int type, string token = "")
         {
             XLTransakcjaInfo_20241 xLTransakcja = new()
             {
@@ -330,11 +331,6 @@ namespace APIWMS.Services
             };
             int result = cdn_api.cdn_api.XLTransakcja(_sessionId, xLTransakcja);
             return result;
-        }
-
-        public int ModifyProduct(int productId, string field, string value)
-        {
-            throw new NotImplementedException();
         }
     }
 }

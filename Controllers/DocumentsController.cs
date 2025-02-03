@@ -34,14 +34,14 @@ namespace APIWMS.Controllers
 
             if (!ModelState.IsValid)
             {
-                await LogErrorAsync(action, "Przekazano nieprawidłową strukturę modelu.", document);
+                await LogErrorAsync(action, "Invalid model structure passed.", document);
                 return BadRequest(ModelState);
             }
 
             if (!Enum.IsDefined(typeof(DocumentType), document.ErpType))
             {
-                await LogErrorAsync(action, $"Typ dokumentu '{document.ErpType}' jest nierozpoznawany.", document);
-                return NotFound(new { Message = $"Typ dokumentu '{document.ErpType}' jest nierozpoznawany." });
+                await LogErrorAsync(action, $"Document type '{document.ErpType}' is not recognized.", document);
+                return NotFound(new { Message = $"Document type '{document.ErpType}' is not recognized." });
             }
 
             try
@@ -50,7 +50,7 @@ namespace APIWMS.Controllers
                 if (!string.IsNullOrEmpty(result))
                 {
                     await LogErrorAsync(action, result, document);
-                    return BadRequest(new { Message = $"Wystąpił błąd: {result}" });
+                    return BadRequest(new { Message = $"Error occured: {result}" });
                 }
 
                 await LogSuccessAsync(action, document);
@@ -58,8 +58,8 @@ namespace APIWMS.Controllers
             }
             catch (Exception ex)
             {
-                await LogErrorAsync(action, "Wystąpił nieoczekiwany błąd.", document, ex);
-                return StatusCode(500, new { Message = "Wystąpił nieoczekiwany błąd." });
+                await LogErrorAsync(action, "Unexpected error occured.", document, ex);
+                return StatusCode(500, new { Message = "Unexpected error occured." });
             }
         }
 
@@ -71,33 +71,33 @@ namespace APIWMS.Controllers
 
             if (!ModelState.IsValid)
             {
-                await LogErrorAsync(action, "Przekazano nieprawidłową strukturę modelu.", document);
+                await LogErrorAsync(action, "Invalid model structure passed.", document);
                 return BadRequest(ModelState);
             }
 
             if (!Enum.IsDefined(typeof(DocumentType), document.ErpType))
             {
-                string errorMessage = $"Typ dokumentu '{document.ErpType}' jest nierozpoznawany.";
+                string errorMessage = $"Document type '{document.ErpType}' is not recognized.";
                 await LogErrorAsync(action, errorMessage, document);
                 return NotFound(new { Message = errorMessage });
             }
 
             try
             {
-                string result = _xlApi.ModifyDocument(document);
+                string result = await _xlApi.ModifyDocument(document);
                 if (!string.IsNullOrEmpty(result))
                 {
                     await LogErrorAsync(action, result, document);
-                    return BadRequest(new { Message = $"Wystąpił błąd: {result}" });
+                    return BadRequest(new { Message = $"Error occured: {result}" });
                 }
 
                 await LogSuccessAsync(action, document);
-                return Ok(document);
+                return Ok(new { document, Message = "Document modified" });
             }
             catch (Exception ex)
             {
-                await LogErrorAsync(action, "Wystąpił nieoczekiwany błąd.", document, ex);
-                return StatusCode(500, new { Message = "Wystąpił nieoczekiwany błąd." });
+                await LogErrorAsync(action, "Unexpected error occured.", document, ex);
+                return StatusCode(500, new { Message = "Unexpected error occured." });
             }
         }
 

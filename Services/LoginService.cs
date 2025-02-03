@@ -20,9 +20,9 @@ public class LoginService : IHostedService
         var loginResult = _xlApiService.Login();
         if (loginResult != 0)
         {
-            _logger.LogError($"Nie udało się zalogować do Xl'a. Kod błędu {loginResult}");
+            _logger.LogError($"Error when trying to log in to XL. Error code {loginResult}");
         }
-        _logger.LogInformation("Zalogowano do Xl'a");
+        _logger.LogInformation("Logged in to XL");
         return Task.CompletedTask;
     }
 
@@ -31,9 +31,9 @@ public class LoginService : IHostedService
         int logoutResult = _xlApiService.Logout();
         if (logoutResult != 0)
         {
-            _logger.LogError($"Nie udało się wylogować z Xl'a. Kod błędu {logoutResult}");
+            _logger.LogError($"Error when tring to log out from XL. Error code: {logoutResult}");
         }
-        _logger.LogInformation("Wylogowano z Xl'a");
+        _logger.LogInformation("Logged out from XL");
         return Task.CompletedTask;
     }
 }
