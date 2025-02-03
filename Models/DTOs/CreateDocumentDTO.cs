@@ -12,13 +12,15 @@ namespace APIWMS.Models.ViewModels
         [Required]
         public required int WmsType { get; set; }
         [Required]
+        public required string WmsName { get; set; }
+        [Required]
         public required DocumentType ErpType { get; set; }
         [Required]
         public required int SourceId { get; set; }
         [Required]
         public required DocumentType SourceType { get; set; }
         [Required]
-        public required string Status { get; set; }
+        public required DocumentStatus Status { get; set; }
         [Required]
         public required string Wearhouse { get; set; }
         [Required]

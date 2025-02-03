@@ -14,7 +14,7 @@ namespace APIWMS.Models.DTOs
         public required int ErpId { get; set; }
         [Required]
         public required DocumentType ErpType { get; set; }
-        public string? Status { get; set; }
+        public DocumentStatus? Status { get; set; }
         public List<Attribute>? Attributes { get; set; }
     }
 }
