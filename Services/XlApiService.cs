@@ -17,13 +17,13 @@ namespace APIWMS.Services
     {
         [DllImport("ClaRUN.dll")]
         public static extern void AttachThreadToClarion(int _flag);
-        private readonly IOptions<XlApiSettings> _config;
+        private readonly XlApiSettings _config;
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<IXlApiService> _logger;
         private int _sessionId;
         public XlApiService(IOptions<XlApiSettings> config, ILogger<IXlApiService> logger, IServiceProvider serviceProvider)
         {
-            _config = config;
+            _config = config.Value;
             _serviceProvider = serviceProvider;
             _logger = logger;
         }
@@ -31,11 +31,11 @@ namespace APIWMS.Services
         {
             XLLoginInfo_20241 xLLoginInfo = new()
             {
-                Wersja = _config.Value.ApiVersion,
-                ProgramID = _config.Value.ProgramName,
-                Baza = _config.Value.Database,
-                OpeIdent = _config.Value.Username,
-                OpeHaslo = _config.Value.Password,
+                Wersja = _config.ApiVersion,
+                ProgramID = _config.ProgramName,
+                Baza = _config.Database,
+                OpeIdent = _config.Username,
+                OpeHaslo = _config.Password,
                 TrybWsadowy = 1
             };
 
@@ -48,7 +48,7 @@ namespace APIWMS.Services
             AttachThreadToClarion(1);
             XLLogoutInfo_20241 xLLogoutInfo = new()
             {
-                Wersja = _config.Value.ApiVersion,
+                Wersja = _config.ApiVersion,
             };
 
             int result = cdn_api.cdn_api.XLLogout(_sessionId);
@@ -64,7 +64,7 @@ namespace APIWMS.Services
             int documentId = 0;
             XLDokumentMagNagInfo_20241 xLDokumentMag = new()
             {
-                Wersja = _config.Value.ApiVersion,
+                Wersja = _config.ApiVersion,
                 Typ = (int)document.ErpType,
                 Akronim = document.ClientName,
                 Magazyn = document.Wearhouse,
@@ -203,7 +203,7 @@ namespace APIWMS.Services
             {
                 XLOtwarcieNagInfo_20241 xLOtwarcieNag = new()
                 {
-                    Wersja = _config.Value.ApiVersion,
+                    Wersja = _config.ApiVersion,
                     Tryb = 2,
                     GIDTyp = (int)documentType,
                     GIDNumer = documentErpId,
@@ -216,7 +216,7 @@ namespace APIWMS.Services
             {
                 XLOtwarcieMagNagInfo_20241 xLOtwarcieMagNag = new()
                 {
-                    Wersja = _config.Value.ApiVersion,
+                    Wersja = _config.ApiVersion,
                     Tryb = 2,
                     GIDTyp = (int)documentType,
                     GIDNumer = documentErpId,
@@ -235,7 +235,7 @@ namespace APIWMS.Services
             {
                 XLZamkniecieDokumentuInfo_20241 xLZamkniecieDokumentu = new()
                 {
-                    Wersja = _config.Value.ApiVersion,
+                    Wersja = _config.ApiVersion,
                     Tryb = Convert.ToInt32(status)
                 };
                 result = cdn_api.cdn_api.XLZamknijDokument(documentId, xLZamkniecieDokumentu);
@@ -244,7 +244,7 @@ namespace APIWMS.Services
             {
                 XLZamkniecieDokumentuMagInfo_20241 xLZamkniecieDokumentuMag = new()
                 {
-                    Wersja = _config.Value.ApiVersion,
+                    Wersja = _config.ApiVersion,
                     Tryb = Convert.ToInt32(status)
                 };
                 result = cdn_api.cdn_api.XLZamknijDokumentMag(documentId, xLZamkniecieDokumentuMag);
@@ -257,7 +257,7 @@ namespace APIWMS.Services
             AttachThreadToClarion(1);
             XLAtrybutInfo_20241 xLAtrybut = new()
             {
-                Wersja = _config.Value.ApiVersion,
+                Wersja = _config.ApiVersion,
                 Klasa = attribute.Name,
                 Wartosc = attribute.Value,
                 GIDNumer = obiNumer,
@@ -276,7 +276,7 @@ namespace APIWMS.Services
         {
             XLDokumentMagElemInfo_20241 xLDokumentMagElem = new()
             {
-                Wersja = _config.Value.ApiVersion,
+                Wersja = _config.ApiVersion,
                 Ilosc = product.Quantity,
                 TowarKod = product.Code
             };
@@ -289,7 +289,7 @@ namespace APIWMS.Services
         {
             XLKomunikatInfo_20241 xLKomunikat = new()
             {
-                Wersja = _config.Value.ApiVersion,
+                Wersja = _config.ApiVersion,
                 Funkcja = function,
                 Blad = errorCode,
                 Tryb = 0
@@ -306,7 +306,7 @@ namespace APIWMS.Services
         {
             XLDokSpiDokInfo_20241 xLDokSpi = new()
             {
-                Wersja = _config.Value.ApiVersion,
+                Wersja = _config.ApiVersion,
                 TypSpi = connectionType,
                 GID1Numer = documentId1,
                 GID1Typ = (int)documentType1,
@@ -326,7 +326,7 @@ namespace APIWMS.Services
         {
             XLTransakcjaInfo_20241 xLTransakcja = new()
             {
-                Wersja = _config.Value.ApiVersion,
+                Wersja = _config.ApiVersion,
                 Tryb = type
             };
             int result = cdn_api.cdn_api.XLTransakcja(_sessionId, xLTransakcja);

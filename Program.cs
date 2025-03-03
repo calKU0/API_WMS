@@ -1,8 +1,10 @@
 using APIWMS.Data;
 using APIWMS.Helpers;
 using APIWMS.Interfaces;
+using APIWMS.Middleware;
 using APIWMS.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Swashbuckle.AspNetCore.Newtonsoft;
@@ -31,6 +33,8 @@ builder.Services.AddSwaggerGenNewtonsoftSupport();
 
 // App Services
 builder.Services.Configure<XlApiSettings>(builder.Configuration.GetSection("XlApiSettings"));
+builder.Services.Configure<BasicAuthSettings>(builder.Configuration.GetSection("BasicAuth"));
+builder.Services.Configure<List<string>>(builder.Configuration.GetSection("AllowedIPs"));
 builder.Services.AddSingleton<IXlApiService, XlApiService>();
 builder.Services.AddScoped<IDatabaseService, DatabaseService>();
 builder.Services.AddScoped<ILoggingService, LoggingService>();
@@ -39,16 +43,38 @@ builder.Services.AddHostedService<LoginService>();
 builder.Services.AddEndpointsApiExplorer();
 
 // Swagger
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen(options =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "APIWMS", Version = "v1" });
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "APIWMS", Version = "v1" });
 
     // Custom order
-    c.DocumentFilter<CustomTagOrderFilter>();
+    options.DocumentFilter<CustomTagOrderFilter>();
 
     // XML comments
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
+    // Authorization
+    options.AddSecurityDefinition("Basic", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "basic",
+        Description = "Enter your username and password as 'username:password' in base64 format."
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Basic"
+                }
+            },
+            new string[] { }
+        }
+    });
 });
 
 var app = builder.Build();
@@ -59,6 +85,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<BasicAuthHandler>("Test");
+app.UseMiddleware<IpWhitelistMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseAuthorization();

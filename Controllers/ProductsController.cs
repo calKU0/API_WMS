@@ -26,16 +26,15 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Modifies a product.
         /// </summary>
-        /// <remarks>
-        /// Sample request:
-        /// 
-        ///         POST /api/Products/UpdateProduct
-        ///         
-        /// </remarks>
         /// <returns>A list of update results.</returns>
         /// <response code="200">A list of update results.</response>
-        /// <response code="400">A list of update results.</response>
-        /// <response code="500">Unexpected error occured.</response>
+        /// <response code="400">Invalid data provided.</response>
+        /// <response code="500">Internal server error.</response>
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("UpdateProduct")]
         [HttpPost]
         public async Task<ActionResult> UpdateProduct(Product product)

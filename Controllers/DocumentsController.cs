@@ -29,19 +29,15 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Creates a new document.
         /// </summary>
-        /// <remarks>
-        /// Sample request:
-        /// 
-        ///         POST /api/Documents/CreateDocument
-        ///         {
-        ///             
-        ///         }
-        ///         
-        /// </remarks>
         /// <returns>A document.</returns>
         /// <response code="200">A newly created document.</response>
         /// <response code="400">Document has invalid data.</response>
-        /// <response code="500">Unexpected error occured.</response>
+        /// <response code="500">Internal server error.</response>
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("CreateDocument")]
         [HttpPost]
         public async Task<ActionResult<CreateDocumentDTO>> CreateDocument(CreateDocumentDTO document)
@@ -82,19 +78,15 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Modifies a document.
         /// </summary>
-        /// <remarks>
-        /// Sample request:
-        /// 
-        ///         POST /api/Documents/EditDocument
-        ///         {
-        ///             
-        ///         }
-        ///         
-        /// </remarks>
         /// <returns>A document.</returns>
         /// <response code="200">A modified document.</response>
         /// <response code="400">Document has invalid data.</response>
-        /// <response code="500">Unexpected error occured.</response>
+        /// <response code="500">Internal server error.</response>
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Route("EditDocument")]
         [HttpPost]
         public async Task<ActionResult<EditDocumentDTO>> EditDocument(EditDocumentDTO document)
