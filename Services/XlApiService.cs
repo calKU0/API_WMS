@@ -66,7 +66,7 @@ namespace APIWMS.Services
             {
                 Wersja = _config.Value.ApiVersion,
                 Typ = (int)document.ErpType,
-                Akronim = document.Client,
+                Akronim = document.ClientName,
                 Magazyn = document.Wearhouse,
                 Opis = document.Description,
                 Cecha = document.WmsName,
@@ -114,7 +114,7 @@ namespace APIWMS.Services
                 return errorMessage;
             }
 
-            int connectionResult = ConnectDocuments(xLDokumentMag.GIDNumer, document.ErpType, document.SourceId, document.SourceType, 3);
+            int connectionResult = ConnectDocuments(xLDokumentMag.GIDNumer, document.ErpType, document.SourceDocId, document.SourceDocType, 3);
             if (connectionResult != 0)
             {
                 errorMessage = CheckError((int)ErrorCode.ZepnijDokument, connectionResult);
@@ -272,7 +272,7 @@ namespace APIWMS.Services
             return result;
         }
 
-        private int AddProductToDocument(int documentId, AddProductToDocumentDTO product)
+        private int AddProductToDocument(int documentId, DocumentProductDTO product)
         {
             XLDokumentMagElemInfo_20241 xLDokumentMagElem = new()
             {

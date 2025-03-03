@@ -20,6 +20,17 @@ namespace APIWMS.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Gets all logs from database.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///         GET /api/Logs/GetLogs
+        ///         
+        /// </remarks>
+        /// <returns>A list of logs.</returns>
+        /// <response code="200">A list of logs.</response>
         [Route("GetLogs")]
         [HttpGet]
         public ActionResult<ApiLog> GetLogs()
@@ -27,6 +38,19 @@ namespace APIWMS.Controllers
             return Ok(_context.ApiLogs.ToList());
         }
 
+        /// <summary>
+        /// Gets a log with specific entityId.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///         GET /api/Logs/GetLog?entityId=1?entityType=1?Source=ERP
+        ///         
+        /// </remarks>
+        /// <returns>A log.</returns>
+        /// <response code="200">A log.</response>
+        /// <response code="400">Passed invalid data to parameters.</response>
+        /// <response code="404">Log with specified parameters not found.</response>
         [Route("GetLog")]
         [HttpGet]
         public ActionResult<ApiLog> GetLog(int entityId, int entityType, string Source)

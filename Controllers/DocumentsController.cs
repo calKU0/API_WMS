@@ -26,6 +26,22 @@ namespace APIWMS.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Creates a new document.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///         POST /api/Documents/CreateDocument
+        ///         {
+        ///             
+        ///         }
+        ///         
+        /// </remarks>
+        /// <returns>A document.</returns>
+        /// <response code="200">A newly created document.</response>
+        /// <response code="400">Document has invalid data.</response>
+        /// <response code="500">Unexpected error occured.</response>
         [Route("CreateDocument")]
         [HttpPost]
         public async Task<ActionResult<CreateDocumentDTO>> CreateDocument(CreateDocumentDTO document)
@@ -41,7 +57,7 @@ namespace APIWMS.Controllers
             if (!Enum.IsDefined(typeof(DocumentType), document.ErpType))
             {
                 await LogErrorAsync(action, $"Document type '{document.ErpType}' is not recognized.", document);
-                return NotFound(new { Message = $"Document type '{document.ErpType}' is not recognized." });
+                return BadRequest(new { Message = $"Document type '{document.ErpType}' is not recognized." });
             }
 
             try
@@ -63,6 +79,22 @@ namespace APIWMS.Controllers
             }
         }
 
+        /// <summary>
+        /// Modifies a document.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///         POST /api/Documents/EditDocument
+        ///         {
+        ///             
+        ///         }
+        ///         
+        /// </remarks>
+        /// <returns>A document.</returns>
+        /// <response code="200">A modified document.</response>
+        /// <response code="400">Document has invalid data.</response>
+        /// <response code="500">Unexpected error occured.</response>
         [Route("EditDocument")]
         [HttpPost]
         public async Task<ActionResult<EditDocumentDTO>> EditDocument(EditDocumentDTO document)
@@ -79,7 +111,7 @@ namespace APIWMS.Controllers
             {
                 string errorMessage = $"Document type '{document.ErpType}' is not recognized.";
                 await LogErrorAsync(action, errorMessage, document);
-                return NotFound(new { Message = errorMessage });
+                return BadRequest(new { Message = errorMessage });
             }
 
             try

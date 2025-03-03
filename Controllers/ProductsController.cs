@@ -23,6 +23,19 @@ namespace APIWMS.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Modifies a product.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///         POST /api/Products/UpdateProduct
+        ///         
+        /// </remarks>
+        /// <returns>A list of update results.</returns>
+        /// <response code="200">A list of update results.</response>
+        /// <response code="400">A list of update results.</response>
+        /// <response code="500">Unexpected error occured.</response>
         [Route("UpdateProduct")]
         [HttpPost]
         public async Task<ActionResult> UpdateProduct(Product product)
