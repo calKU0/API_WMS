@@ -39,12 +39,12 @@ namespace APIWMS.Models.ViewModels
         /// Status of the ERP document
         /// </summary>
         [Required]
-        public required string Status { get; set; }
+        public required DocumentStatus Status { get; set; }
         /// <summary>
         /// Wearhouse
         /// </summary>
         [Required]
-        public required string Warehouse { get; set; }
+        public required Warehouse Warehouse { get; set; }
         /// <summary>
         /// Id of the ERP client
         /// </summary>

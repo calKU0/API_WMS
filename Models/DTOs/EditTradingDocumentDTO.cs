@@ -29,7 +29,7 @@ namespace APIWMS.Models.DTOs
         /// <summary>
         /// Status of the ERP document
         /// </summary>
-        public string? Status { get; set; }
+        public DocumentStatus? Status { get; set; }
         /// <summary>
         /// List of attributes of the document
         /// </summary>

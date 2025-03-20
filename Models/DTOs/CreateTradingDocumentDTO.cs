@@ -26,23 +26,30 @@ namespace APIWMS.Models.ViewModels
         [Required]
         public required TradingDocumentType ErpType { get; set; }
         /// <summary>
+        /// Document id of the related document
+        /// </summary>
+        public int SourceDocId { get; set; }
+        /// <summary>
+        /// Document type of the related document
+        /// </summary>
+        public TradingDocumentType SourceDocType { get; set; }
+        /// <summary>
         /// Source warehouse
         /// </summary>
-        /// 
         [Required]
-        public required string SourceWarehouse { get; set; }
+        public required Warehouse SourceWarehouse { get; set; }
         /// <summary>
         /// Destination warehouse
         /// </summary>
         /// 
         [Required]
-        public required string DestinationWarehouse { get; set; }
+        public required Warehouse DestinationWarehouse { get; set; }
         /// <summary>
         /// Status of the ERP document
         /// </summary>
         /// 
         [Required]
-        public required string Status { get; set; }
+        public required DocumentStatus Status { get; set; }
         /// <summary>
         /// Id of the ERP client
         /// </summary>
