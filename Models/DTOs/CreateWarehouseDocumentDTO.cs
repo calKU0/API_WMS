@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace APIWMS.Models.ViewModels
 {
-    public class CreateDocumentDTO
+    public class CreateWarehouseDocumentDTO
     {
 
         /// <summary>
@@ -24,7 +24,7 @@ namespace APIWMS.Models.ViewModels
         /// Document name in WMS system
         /// </summary>
         [Required]
-        public required DocumentType ErpType { get; set; }
+        public required WarehouseDocumentType ErpType { get; set; }
         /// <summary>
         /// Document id of the related document
         /// </summary>
@@ -34,7 +34,7 @@ namespace APIWMS.Models.ViewModels
         /// Document type of the related document
         /// </summary>
         [Required]
-        public required DocumentType SourceDocType { get; set; }
+        public required TradingDocumentType SourceDocType { get; set; }
         /// <summary>
         /// Status of the ERP document
         /// </summary>
@@ -44,7 +44,7 @@ namespace APIWMS.Models.ViewModels
         /// Wearhouse
         /// </summary>
         [Required]
-        public required string Wearhouse { get; set; }
+        public required string Warehouse { get; set; }
         /// <summary>
         /// Id of the ERP client
         /// </summary>

@@ -8,8 +8,10 @@ namespace APIWMS.Interfaces
     {
         public int Login();
         public int Logout();
-        public string CreateDocument(CreateDocumentDTO createDocumentDTO);
-        public Task<string> ModifyDocument(EditDocumentDTO editDocumentDTO);
+        public string CreateTradingDocument(CreateTradingDocumentDTO createTradingDocumentDTO);
+        public Task<string> EditTradingDocument(EditTradingDocumentDTO editTradingDocumentDTO);
+        public string CreateWarehouseDocument(CreateWarehouseDocumentDTO createWarehouseDocumentDTO);
+        public Task<string> EditWarehouseDocument(EditWarehouseDocumentDTO editWarehouseDocumentDTO);
         public int AddAttribute(int obiNumer, int obiType, int obiLp, Models.Attribute attribute);
     }
 }

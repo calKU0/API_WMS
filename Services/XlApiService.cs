@@ -55,7 +55,8 @@ namespace APIWMS.Services
             return result;
         }
 
-        public string CreateDocument(CreateDocumentDTO document)
+        #region WarehouseDocuments
+        public string CreateWarehouseDocument(CreateWarehouseDocumentDTO document)
         {
             AttachThreadToClarion(1);
             ManageTransaction(0); // Otwieramy transakcje
@@ -67,7 +68,7 @@ namespace APIWMS.Services
                 Wersja = _config.ApiVersion,
                 Typ = (int)document.ErpType,
                 Akronim = document.ClientName,
-                Magazyn = document.Wearhouse,
+                Magazyn = document.Warehouse,
                 Opis = document.Description,
                 Cecha = document.WmsName,
             };
@@ -82,7 +83,7 @@ namespace APIWMS.Services
             }
             foreach (var product in document.Products)
             {
-                int productResult = AddProductToDocument(documentId, product);
+                int productResult = AddProductToWarehouseDocument(documentId, product);
                 if (productResult != 0)
                 {
                     errorMessage = CheckError((int)ErrorCode.DodajPozycjeMag, productResult);
@@ -106,7 +107,7 @@ namespace APIWMS.Services
                 }
             }
 
-            int closeResult = CloseDocument(documentId, document.ErpType, document.Status.ToString());
+            int closeResult = CloseWarehouseDocument(documentId, document.ErpType, document.Status.ToString());
             if (closeResult != 0)
             {
                 errorMessage = CheckError((int)ErrorCode.ZamknijDokumentMag, closeResult);
@@ -127,7 +128,7 @@ namespace APIWMS.Services
             return errorMessage;
         }
 
-        public async Task<string> ModifyDocument(EditDocumentDTO document)
+        public async Task<string> EditWarehouseDocument(EditWarehouseDocumentDTO document)
         {
             AttachThreadToClarion(1);
 
@@ -139,30 +140,20 @@ namespace APIWMS.Services
             if (!string.IsNullOrEmpty(document.Status.ToString()))
             {
                 ManageTransaction(0); // Otwieramy transakcje
-                if (DocumentTypeGroups.DokHandlowy.Contains((DocumentType)document.ErpType))
-                {
-                    openErrorCode = (int)ErrorCode.OtworzDokumentHan;
-                    closeErrorCode = (int)ErrorCode.ZamknijDokument;
-                }
-                else
-                {
-                    openErrorCode = (int)ErrorCode.OtworzDokumentMag;
-                    closeErrorCode = (int)ErrorCode.ZamknijDokumentMag;
-                }
 
-                int openDocResult = OpenDocument(document.ErpId, document.ErpType, out documentId);
+                int openDocResult = OpenWarehouseDocument(document.ErpId, document.ErpType, out documentId);
                 if (openDocResult != 0)
                 {
-                    errorMessage = CheckError(openErrorCode, openDocResult);
+                    errorMessage = CheckError((int)ErrorCode.OtworzDokumentMag, openDocResult);
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
 
-                int closeDocResult = CloseDocument(documentId, document.ErpType, document.Status.ToString());
+                int closeDocResult = CloseWarehouseDocument(documentId, document.ErpType, document.Status.ToString());
                 Console.WriteLine(closeDocResult);
                 if (closeDocResult != 0)
                 {
-                    errorMessage = CheckError(closeErrorCode, closeDocResult);
+                    errorMessage = CheckError((int)ErrorCode.ZamknijDokumentMag, closeDocResult);
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
@@ -194,64 +185,227 @@ namespace APIWMS.Services
 
         }
 
-        private int OpenDocument(int documentErpId, DocumentType documentType, out int documentId)
+        private int AddProductToWarehouseDocument(int documentId, DocumentProductDTO product)
+        {
+            XLDokumentMagElemInfo_20241 xLDokumentMagElem = new()
+            {
+                Wersja = _config.ApiVersion,
+                Ilosc = product.Quantity,
+                TowarKod = product.Code
+            };
+
+            int result = cdn_api.cdn_api.XLDodajPozycjeMag(documentId, xLDokumentMagElem);
+            return result;
+        }
+
+        private int OpenWarehouseDocument(int documentErpId, WarehouseDocumentType documentType, out int documentId)
         {
             int result = -1;
             documentId = 0;
 
-            if (DocumentTypeGroups.DokHandlowy.Contains(documentType))
+            XLOtwarcieMagNagInfo_20241 xLOtwarcieMagNag = new()
             {
-                XLOtwarcieNagInfo_20241 xLOtwarcieNag = new()
-                {
-                    Wersja = _config.ApiVersion,
-                    Tryb = 2,
-                    GIDTyp = (int)documentType,
-                    GIDNumer = documentErpId,
-                    GIDFirma = 449892,
-                    GIDLp = 0,
-                };
-                result = cdn_api.cdn_api.XLOtworzDokument(_sessionId, ref documentId, xLOtwarcieNag);
-            }
-            if (DocumentTypeGroups.DokMagazynowe.Contains(documentType))
-            {
-                XLOtwarcieMagNagInfo_20241 xLOtwarcieMagNag = new()
-                {
-                    Wersja = _config.ApiVersion,
-                    Tryb = 2,
-                    GIDTyp = (int)documentType,
-                    GIDNumer = documentErpId,
-                    GIDFirma = 449892,
-                    GIDLp = 0,
-                };
-                result = cdn_api.cdn_api.XLOtworzDokumentMag(_sessionId, ref documentId, xLOtwarcieMagNag);
-            }
+                Wersja = _config.ApiVersion,
+                Tryb = 2,
+                GIDTyp = (int)documentType,
+                GIDNumer = documentErpId,
+                GIDFirma = 449892,
+                GIDLp = 0,
+            };
+            result = cdn_api.cdn_api.XLOtworzDokumentMag(_sessionId, ref documentId, xLOtwarcieMagNag);
+
             return result;
         }
 
-        private int CloseDocument(int documentId, DocumentType type, string status)
+        private int CloseWarehouseDocument(int documentId, WarehouseDocumentType type, string status)
         {
             int result = -1;
-            if (DocumentTypeGroups.DokHandlowy.Contains(type))
+
+            XLZamkniecieDokumentuMagInfo_20241 xLZamkniecieDokumentuMag = new()
             {
-                XLZamkniecieDokumentuInfo_20241 xLZamkniecieDokumentu = new()
-                {
-                    Wersja = _config.ApiVersion,
-                    Tryb = Convert.ToInt32(status)
-                };
-                result = cdn_api.cdn_api.XLZamknijDokument(documentId, xLZamkniecieDokumentu);
-            }
-            else
+                Wersja = _config.ApiVersion,
+                Tryb = Convert.ToInt32(status)
+            };
+            result = cdn_api.cdn_api.XLZamknijDokumentMag(documentId, xLZamkniecieDokumentuMag);
+
+            return result;
+        }
+        #endregion
+        #region TradingDocuments
+        public string CreateTradingDocument(CreateTradingDocumentDTO document)
+        {
+            AttachThreadToClarion(1);
+            ManageTransaction(0); // Otwieramy transakcje
+
+            string errorMessage = string.Empty;
+            int documentId = 0;
+            XLDokumentNagInfo_20241 xLDokumentHand = new()
             {
-                XLZamkniecieDokumentuMagInfo_20241 xLZamkniecieDokumentuMag = new()
-                {
-                    Wersja = _config.ApiVersion,
-                    Tryb = Convert.ToInt32(status)
-                };
-                result = cdn_api.cdn_api.XLZamknijDokumentMag(documentId, xLZamkniecieDokumentuMag);
+                Wersja = _config.ApiVersion,
+                Typ = (int)document.ErpType,
+                MagazynZ = document.SourceWarehouse,
+                MagazynD = document.DestinationWarehouse,
+                Opis = document.Description,
+                Cecha = document.WmsName,
+            };
+
+            int createResult = cdn_api.cdn_api.XLNowyDokument(_sessionId, ref documentId, xLDokumentHand);
+
+            if (createResult != 0 || documentId == 0)
+            {
+                errorMessage = CheckError((int)ErrorCode.NowyDokument, createResult);
+                ManageTransaction(2); // Zamykamy transakcje
+                return errorMessage;
             }
+            foreach (var product in document.Products)
+            {
+                int productResult = AddProductToTradingDocument(documentId, product);
+                if (productResult != 0)
+                {
+                    errorMessage = CheckError((int)ErrorCode.DodajPozycje, productResult);
+                    ManageTransaction(2); // Zamykamy transakcje
+                    return errorMessage;
+                }
+                _logger.LogInformation($"Added product {product.Code} to document {document.WmsName}.");
+            }
+
+            if (document.Attributes?.Count >= 1)
+            {
+                foreach (var attribute in document.Attributes)
+                {
+                    int addAttributeResult = AddAttribute(xLDokumentHand.GIDNumer, (int)document.ErpType, 0, attribute);
+                    if (addAttributeResult != 0)
+                    {
+                        errorMessage = $"Error when adding attribute {attribute.Name} with value {attribute.Value} to document {document.WmsName}";
+                        ManageTransaction(2); // Zamykamy transakcje
+                        return errorMessage;
+                    }
+                }
+            }
+
+            int closeResult = CloseTradingDocument(documentId, document.ErpType, document.Status.ToString());
+            if (closeResult != 0)
+            {
+                errorMessage = CheckError((int)ErrorCode.ZamknijDokumentMag, closeResult);
+                ManageTransaction(2); // Zamykamy transakcje
+                return errorMessage;
+            }
+
+            /*int connectionResult = ConnectDocuments(xLDokumentHand.GIDNumer, document.ErpType, document.SourceDocId, document.SourceDocType, 3);
+            if (connectionResult != 0)
+            {
+                errorMessage = CheckError((int)ErrorCode.ZepnijDokument, connectionResult);
+                ManageTransaction(2); // Zamykamy transakcje
+                return errorMessage;
+            }*/
+
+            _logger.LogInformation($"Added document with WMSName: {document.WmsName} ({document.WmsId})");
+            ManageTransaction(1); // Potwierdzamy transakcje
+            return errorMessage;
+        }
+        public async Task<string> EditTradingDocument(EditTradingDocumentDTO document)
+        {
+            AttachThreadToClarion(1);
+
+            int documentId = 0;
+            string errorMessage = String.Empty;
+            int openErrorCode;
+            int closeErrorCode;
+
+            if (!string.IsNullOrEmpty(document.Status.ToString()))
+            {
+                ManageTransaction(0); // Otwieramy transakcje
+
+                int openDocResult = OpenTradingDocument(document.ErpId, document.ErpType, out documentId);
+                if (openDocResult != 0)
+                {
+                    errorMessage = CheckError((int)ErrorCode.OtworzDokumentHan, openDocResult);
+                    ManageTransaction(2); // Zamykamy transakcje
+                    return errorMessage;
+                }
+
+                int closeDocResult = CloseTradingDocument(documentId, document.ErpType, document.Status.ToString());
+                Console.WriteLine(closeDocResult);
+                if (closeDocResult != 0)
+                {
+                    errorMessage = CheckError((int)ErrorCode.ZamknijDokument, closeDocResult);
+                    ManageTransaction(2); // Zamykamy transakcje
+                    return errorMessage;
+                }
+                _logger.LogInformation($"Updated document status ERPID: {document.ErpId}");
+            }
+
+            if (document.Attributes?.Count >= 1)
+            {
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<IDatabaseService>();
+
+                    var failedAttributes = await context.UpdateAttributes(document.ErpId, (int)document.ErpType, 0, document.Attributes);
+
+                    if (failedAttributes.Count != 0)
+                    {
+                        foreach (var failedAttribute in failedAttributes)
+                        {
+                            errorMessage = $"Error updating attribute {failedAttribute} on document with ERPID: {document.ErpId}";
+                            return errorMessage;
+                        }
+                    }
+                    _logger.LogInformation($"Updated attributes on document with ERPID: {document.ErpId}");
+                }
+            }
+
+            ManageTransaction(1); // Potwierdzamy transakcje
+            return errorMessage;
+
+        }
+
+        private int AddProductToTradingDocument(int documentId, DocumentProductDTO product)
+        {
+            XLDokumentElemInfo_20241 xLDokumentElem = new()
+            {
+                Wersja = _config.ApiVersion,
+                Ilosc = product.Quantity,
+                TowarKod = product.Code
+            };
+
+            int result = cdn_api.cdn_api.XLDodajPozycje(documentId, xLDokumentElem);
             return result;
         }
 
+        private int OpenTradingDocument(int documentErpId, TradingDocumentType documentType, out int documentId)
+        {
+            int result = -1;
+            documentId = 0;
+
+            XLOtwarcieNagInfo_20241 xLOtwarcieNag = new()
+            {
+                Wersja = _config.ApiVersion,
+                Tryb = 2,
+                GIDTyp = (int)documentType,
+                GIDNumer = documentErpId,
+                GIDFirma = 449892,
+                GIDLp = 0,
+            };
+            result = cdn_api.cdn_api.XLOtworzDokument(_sessionId, ref documentId, xLOtwarcieNag);
+
+            return result;
+        }
+
+        private int CloseTradingDocument(int documentId, TradingDocumentType type, string status)
+        {
+            int result = -1;
+
+            XLZamkniecieDokumentuInfo_20241 xLZamkniecieDokumentu = new()
+            {
+                Wersja = _config.ApiVersion,
+                Tryb = Convert.ToInt32(status)
+            };
+            result = cdn_api.cdn_api.XLZamknijDokument(documentId, xLZamkniecieDokumentu);
+
+            return result;
+        }
+        #endregion
         public int AddAttribute(int obiNumer, int obiType, int obiLp, Models.Attribute attribute)
         {
             AttachThreadToClarion(1);
@@ -272,19 +426,6 @@ namespace APIWMS.Services
             return result;
         }
 
-        private int AddProductToDocument(int documentId, DocumentProductDTO product)
-        {
-            XLDokumentMagElemInfo_20241 xLDokumentMagElem = new()
-            {
-                Wersja = _config.ApiVersion,
-                Ilosc = product.Quantity,
-                TowarKod = product.Code
-            };
-
-            int result = cdn_api.cdn_api.XLDodajPozycjeMag(documentId, xLDokumentMagElem);
-            return result;
-        }
-
         private string CheckError(int function, int errorCode)
         {
             XLKomunikatInfo_20241 xLKomunikat = new()
@@ -302,7 +443,7 @@ namespace APIWMS.Services
                 return $"Error while checking error. Error code: {result}";
         }
 
-        private int ConnectDocuments(int documentId1, DocumentType documentType1, int documentId2, DocumentType documentType2, int connectionType)
+        private int ConnectDocuments(int documentId1, WarehouseDocumentType documentType1, int documentId2, TradingDocumentType documentType2, int connectionType)
         {
             XLDokSpiDokInfo_20241 xLDokSpi = new()
             {

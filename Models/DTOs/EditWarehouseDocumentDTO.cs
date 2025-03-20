@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace APIWMS.Models.DTOs
 {
-    public class EditDocumentDTO
+    public class EditWarehouseDocumentDTO
     {
         /// <summary>
         /// Document id in WMS system
@@ -25,7 +25,7 @@ namespace APIWMS.Models.DTOs
         /// Document type in ERP system
         /// </summary>
         [Required]
-        public required DocumentType ErpType { get; set; }
+        public required WarehouseDocumentType ErpType { get; set; }
         /// <summary>
         /// Status of the ERP document
         /// </summary>
