@@ -16,6 +16,7 @@ namespace APIWMS.Models
         public int EntityErpId { get; set; }
         public int EntityErpType { get; set; }
         public string? Flow { get; set; }
+        public int MailSent { get; set; }
         [Required]
         public required string Action { get; set; }
         [Required]

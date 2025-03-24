@@ -50,7 +50,7 @@ namespace APIWMS.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (!Enum.IsDefined(typeof(TradingDocumentType), document.ErpType))
+            if (!Enum.IsDefined(typeof(WarehouseDocumentType), document.ErpType))
             {
                 await LogErrorAsync(action, $"Document type '{document.ErpType}' is not recognized.", document);
                 return BadRequest(new { Message = $"Document type '{document.ErpType}' is not recognized." });
@@ -99,7 +99,7 @@ namespace APIWMS.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (!Enum.IsDefined(typeof(TradingDocumentType), document.ErpType))
+            if (!Enum.IsDefined(typeof(WarehouseDocumentType), document.ErpType))
             {
                 string errorMessage = $"Document type '{document.ErpType}' is not recognized.";
                 await LogErrorAsync(action, errorMessage, document);

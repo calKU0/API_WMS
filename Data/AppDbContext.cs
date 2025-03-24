@@ -5,7 +5,7 @@ namespace APIWMS.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) 
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
         public DbSet<ApiLog> ApiLogs { get; set; }
@@ -18,6 +18,10 @@ namespace APIWMS.Data
             modelBuilder.Entity<ApiLog>()
                 .Property(e => e.CreatedDate)
                 .HasDefaultValueSql("GETDATE()");
+
+            modelBuilder.Entity<ApiLog>()
+                .Property(e => e.MailSent)
+                .HasDefaultValueSql("0");
 
             // Zmiana default schema
             modelBuilder.HasDefaultSchema("kkur");
