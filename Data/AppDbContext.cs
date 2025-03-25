@@ -21,7 +21,8 @@ namespace APIWMS.Data
 
             modelBuilder.Entity<ApiLog>()
                 .Property(e => e.MailSent)
-                .HasDefaultValueSql("0");
+                .HasColumnType("bit")
+                .HasDefaultValue(false);
 
             // Zmiana default schema
             modelBuilder.HasDefaultSchema("kkur");
