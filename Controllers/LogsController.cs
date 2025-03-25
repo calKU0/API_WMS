@@ -34,11 +34,23 @@ namespace APIWMS.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<List<ApiLog>>> GetLogs()
+        public async Task<ActionResult<List<ApiLogDTO>>> GetLogs()
         {
             try
             {
-                var logs = await _context.ApiLogs.ToListAsync();
+                var logs = await _context.ApiLogs
+                    .Select(log => new ApiLogDTO
+                    {
+                        EntityErpId = log.EntityErpId,
+                        EntityErpType = log.EntityErpType,
+                        EntityWmsId = log.EntityWmsId,
+                        EntityWmsType = log.EntityWmsType,
+                        Action = log.Action,
+                        Success = log.Success,
+                        ErrorMessage = log.ErrorMessage,
+                        CreatedDate = log.CreatedDate
+                    })
+                    .ToListAsync();
 
                 if (!logs.Any())
                 {
@@ -49,7 +61,7 @@ namespace APIWMS.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogCritical($"Error fetching logs: {ex.Message}");
+                _logger.LogCritical($"Error fetching logs: {ex}");
                 return StatusCode(500, "Internal Server Error");
             }
         }
@@ -71,29 +83,57 @@ namespace APIWMS.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiLog>> GetLog(int entityId, int entityType, string Source)
+        public async Task<ActionResult<ApiLogDTO>> GetLog(int entityId, int entityType, string Source)
         {
             try
             {
-                if (entityId <= 0 || entityType <= 0)
-                    return BadRequest();
                 if (Source != "WMS" && Source != "ERP")
-                    return BadRequest();
+                    return BadRequest("Source can be only in list of [ERP, WMS]");
 
-                List<ApiLog> log;
+                List<ApiLogDTO> logs;
                 if (Source == "ERP")
-                    log = await _context.ApiLogs.Where(i => i.EntityErpId == entityId && i.EntityErpType == entityType).ToListAsync();
+                {
+                    logs = await _context.ApiLogs
+                        .Where(i => i.EntityErpId == entityId && i.EntityErpType == entityType)
+                        .Select(log => new ApiLogDTO
+                        {
+                            EntityErpId = log.EntityErpId,
+                            EntityErpType = log.EntityErpType,
+                            EntityWmsId = log.EntityWmsId,
+                            EntityWmsType = log.EntityWmsType,
+                            Action = log.Action,
+                            Success = log.Success,
+                            ErrorMessage = log.ErrorMessage,
+                            CreatedDate = log.CreatedDate
+                        })
+                        .ToListAsync();
+                }
                 else
-                    log = await _context.ApiLogs.Where(i => i.EntityWmsId == entityId && i.EntityWmsType == entityType).ToListAsync();
+                {
+                    logs = await _context.ApiLogs
+                        .Where(i => i.EntityWmsId == entityId && i.EntityWmsType == entityType)
+                         .Select(log => new ApiLogDTO
+                         {
+                             EntityErpId = log.EntityErpId,
+                             EntityErpType = log.EntityErpType,
+                             EntityWmsId = log.EntityWmsId,
+                             EntityWmsType = log.EntityWmsType,
+                             Action = log.Action,
+                             Success = log.Success,
+                             ErrorMessage = log.ErrorMessage,
+                             CreatedDate = log.CreatedDate
+                         })
+                        .ToListAsync();
+                }
 
-                if (log == null)
+                if (!logs.Any())
                     return NotFound();
 
-                return Ok(log);
+                return Ok(logs);
             }
             catch (Exception ex)
             {
-                _logger.LogCritical($"Error fetching logs: {ex.Message}");
+                _logger.LogCritical($"Error fetching logs: {ex}");
                 return StatusCode(500, "Internal Server Error");
             }
         }
