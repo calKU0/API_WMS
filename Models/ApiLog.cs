@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using APIWMS.Data.Enums;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
@@ -12,9 +13,9 @@ namespace APIWMS.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public int EntityWmsId { get; set; }
-        public int EntityWmsType { get; set; }
+        public DocumentType EntityWmsType { get; set; }
         public int EntityErpId { get; set; }
-        public int EntityErpType { get; set; }
+        public DocumentType EntityErpType { get; set; }
         public required string Flow { get; set; }
         public int MailSent { get; set; }
         [Required]

@@ -5,7 +5,7 @@
 namespace APIWMS.Migrations
 {
     /// <inheritdoc />
-    public partial class addflowcolumn : Migration
+    public partial class addFlowColumn : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

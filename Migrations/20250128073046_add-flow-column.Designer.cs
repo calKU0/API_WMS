@@ -13,7 +13,7 @@ namespace APIWMS.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20250128073046_add-flow-column")]
-    partial class addflowcolumn
+    partial class addFlowColumn
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

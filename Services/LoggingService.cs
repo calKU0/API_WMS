@@ -1,4 +1,5 @@
 ﻿using APIWMS.Data;
+using APIWMS.Data.Enums;
 using APIWMS.Interfaces;
 using APIWMS.Models;
 using Serilog;
@@ -34,13 +35,13 @@ namespace APIWMS.Services
                             log.EntityWmsId = Convert.ToInt32(field.Value);
                             break;
                         case "entitywmstype":
-                            log.EntityWmsType = Convert.ToInt32(field.Value);
+                            log.EntityWmsType = (DocumentType)field.Value;
                             break;
                         case "entityerpid":
                             log.EntityErpId = Convert.ToInt32(field.Value);
                             break;
                         case "entityerptype":
-                            log.EntityErpType = Convert.ToInt32(field.Value);
+                            log.EntityErpType = (DocumentType)field.Value;
                             break;
                     }
                 }
