@@ -22,7 +22,7 @@ namespace APIWMS.Services
                 Action = action,
                 Success = success,
                 ErrorMessage = errorMessage,
-                Flow = "IN"
+                Flow = LogFlow.IN
             };
 
             if (fields != null)

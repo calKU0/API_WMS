@@ -24,6 +24,10 @@ namespace APIWMS.Data
                 .HasColumnType("bit")
                 .HasDefaultValue(false);
 
+            modelBuilder.Entity<ApiLog>()
+                .Property(e => e.Flow)
+                .HasConversion<string>();
+
             // Zmiana default schema
             modelBuilder.HasDefaultSchema("kkur");
         }

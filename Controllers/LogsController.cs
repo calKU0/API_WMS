@@ -24,6 +24,9 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Gets all logs from database.
         /// </summary>
+        /// <param name="flow">Entity synchro flow. IN - Into ERP; OUT - Into WMS (optional).</param>
+        /// <param name="success">Filters logs by success status (optional).</param>
+        /// <param name="dateFrom">Filters logs created on or after this date. Date must be passed in YYYY-MM-DDTHH:mm:ss format (optional).</param>
         /// <returns>A list of logs.</returns>
         /// <response code="200">A list of logs.</response>
         /// <response code="404">No logs found.</response>
@@ -34,23 +37,39 @@ namespace APIWMS.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<List<ApiLogDTO>>> GetLogs()
+        public async Task<ActionResult<List<ApiLogDTO>>> GetLogs(LogFlow? flow, bool? success, DateTime? dateFrom)
         {
             try
             {
-                var logs = await _context.ApiLogs
-                    .Select(log => new ApiLogDTO
-                    {
-                        EntityErpId = log.EntityErpId,
-                        EntityErpType = log.EntityErpType,
-                        EntityWmsId = log.EntityWmsId,
-                        EntityWmsType = log.EntityWmsType,
-                        Action = log.Action,
-                        Success = log.Success,
-                        ErrorMessage = log.ErrorMessage,
-                        CreatedDate = log.CreatedDate
-                    })
-                    .ToListAsync();
+                var query = _context.ApiLogs.AsQueryable();
+
+                if (success.HasValue)
+                {
+                    query = query.Where(i => i.Success == success.Value);
+                }
+
+                if (dateFrom.HasValue)
+                {
+                    query = query.Where(i => i.CreatedDate >= dateFrom.Value);
+                }
+
+                if (flow.HasValue)
+                {
+                    query = query.Where(i => i.Flow == flow);
+                }
+
+                var logs = await query.Select(log => new ApiLogDTO
+                {
+                    EntityErpId = log.EntityErpId,
+                    EntityErpType = log.EntityErpType,
+                    EntityWmsId = log.EntityWmsId,
+                    EntityWmsType = log.EntityWmsType,
+                    Flow = log.Flow,
+                    Action = log.Action,
+                    Success = log.Success,
+                    ErrorMessage = log.ErrorMessage,
+                    CreatedDate = log.CreatedDate
+                }).ToListAsync();
 
                 if (!logs.Any())
                 {
@@ -70,6 +89,9 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Gets a log with specific entityId.
         /// </summary>
+        /// <param name="entityId">ID of the Entity.</param>
+        /// <param name="entityType">Type of the Entity. (optional).</param>
+        /// <param name="source">Source of the entity [ERP, WMS].</param>
         /// <returns>A log.</returns>
         /// <response code="200">A log.</response>
         /// <response code="400">Passed invalid data to parameters.</response>
@@ -83,48 +105,46 @@ namespace APIWMS.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiLogDTO>> GetLog(int entityId, DocumentType? entityType, string Source)
+        public async Task<ActionResult<List<ApiLogDTO>>> GetLog(int entityId, DocumentType? entityType, string source)
         {
             try
             {
-                if (Source != "WMS" && Source != "ERP")
+                if (source != "WMS" && source != "ERP")
                     return BadRequest("Source can be only in list of [ERP, WMS]");
 
-                List<ApiLogDTO> logs;
-                if (Source == "ERP")
+                var query = _context.ApiLogs.AsQueryable();
+
+                if (source == "ERP")
                 {
-                    logs = await _context.ApiLogs
-                        .Where(i => i.EntityErpId == entityId && i.EntityErpType == entityType)
-                        .Select(log => new ApiLogDTO
-                        {
-                            EntityErpId = log.EntityErpId,
-                            EntityErpType = log.EntityErpType,
-                            EntityWmsId = log.EntityWmsId,
-                            EntityWmsType = log.EntityWmsType,
-                            Action = log.Action,
-                            Success = log.Success,
-                            ErrorMessage = log.ErrorMessage,
-                            CreatedDate = log.CreatedDate
-                        })
-                        .ToListAsync();
+                    query = query.Where(i => i.EntityErpId == entityId);
+
+                    if (entityType.HasValue)
+                    {
+                        query = query.Where(i => i.EntityErpType == entityType.Value);
+                    }
                 }
                 else
                 {
-                    logs = await _context.ApiLogs
-                        .Where(i => i.EntityWmsId == entityId && i.EntityWmsType == entityType)
-                         .Select(log => new ApiLogDTO
-                         {
-                             EntityErpId = log.EntityErpId,
-                             EntityErpType = log.EntityErpType,
-                             EntityWmsId = log.EntityWmsId,
-                             EntityWmsType = log.EntityWmsType,
-                             Action = log.Action,
-                             Success = log.Success,
-                             ErrorMessage = log.ErrorMessage,
-                             CreatedDate = log.CreatedDate
-                         })
-                        .ToListAsync();
+                    query = query.Where(i => i.EntityWmsId == entityId);
+
+                    if (entityType.HasValue)
+                    {
+                        query = query.Where(i => i.EntityWmsType == entityType.Value);
+                    }
                 }
+
+                var logs = await query.Select(log => new ApiLogDTO
+                {
+                    EntityErpId = log.EntityErpId,
+                    EntityErpType = log.EntityErpType,
+                    EntityWmsId = log.EntityWmsId,
+                    EntityWmsType = log.EntityWmsType,
+                    Flow = log.Flow,
+                    Action = log.Action,
+                    Success = log.Success,
+                    ErrorMessage = log.ErrorMessage,
+                    CreatedDate = log.CreatedDate
+                }).ToListAsync();
 
                 if (!logs.Any())
                     return NotFound();
