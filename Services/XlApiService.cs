@@ -125,6 +125,7 @@ namespace APIWMS.Services
 
             _logger.LogInformation($"Added document with WMSName: {document.WmsName} ({document.WmsId})");
             ManageTransaction(1); // Potwierdzamy transakcje
+            document.ErpId = xLDokumentMag.GIDNumer;
             return errorMessage;
         }
 
@@ -295,6 +296,7 @@ namespace APIWMS.Services
 
             _logger.LogInformation($"Added document with WMSName: {document.WmsName} ({document.WmsId})");
             ManageTransaction(1); // Potwierdzamy transakcje
+            document.ErpId = xLDokumentHand.GIDNumer;
             return errorMessage;
         }
 

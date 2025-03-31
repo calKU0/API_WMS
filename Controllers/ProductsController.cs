@@ -26,6 +26,28 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Modifies a product.
         /// </summary>
+        /// <remarks>
+        /// Updates the details and attributes of a product in the system.  
+        /// The modification may include changes to:  
+        ///  
+        /// - Product EAN, Weight, Volume, Images, Units
+        /// - Custom attributes specific to the product
+        ///  
+        /// Available attributes:  
+        /// - **Wysokość magazynowa (cm)**: Height of the product’s base unit. 
+        /// - **Długość magazynowa (cm)**: Length of the product’s base unit.  
+        /// - **Szerokość magazynowa (cm)**: Width of the product’s base unit. 
+        /// - **Przenośnik taśmowy** (`TAK`, `NIE`): Specifies whether the product should be packed on a pallet (`NO`) or in packages (`YES`).
+        /// - **Typ towaru pack** (`Standardowy`, `Niestandardowy`, `Długi do 2mb`, `Długi do 3mb`, `Gabarytowy`, `Delikatny`, `Paletowy`, `Pół-paletowy`, `Standardowy/Nieokreslony`)
+        /// 
+        ///  Available attributes for product unit:  
+        /// - **Wysokość magazynowa (cm)**: Height of the product’s unit. 
+        /// - **Długość magazynowa (cm)**: Length of the product’s unit.  
+        /// - **Szerokość magazynowa (cm)**: Width of the product’s unit. 
+        /// 
+        /// The response returns a list of update results indicating the success or failure of each modification.  
+        /// If invalid data is provided, a `400 Bad Request` response is returned.  
+        /// </remarks>
         /// <returns>A list of update results.</returns>
         /// <response code="200">A list of update results.</response>
         /// <response code="400">Invalid data provided.</response>

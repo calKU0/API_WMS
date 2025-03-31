@@ -2,6 +2,7 @@
 using APIWMS.Models.DTOs;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace APIWMS.Models.ViewModels
 {
@@ -18,10 +19,18 @@ namespace APIWMS.Models.ViewModels
         /// </summary>
         [Required]
         public required int WmsType { get; set; }
+        /// <summary>
+        /// Document name in WMS system
+        /// </summary>
         [Required]
         public required string WmsName { get; set; }
         /// <summary>
-        /// Document name in WMS system
+        /// ERP ID - This field is only for responses, not for incoming POST requests.
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public int ErpId { get; set; }
+        /// <summary>
+        /// Document type in ERP system
         /// </summary>
         [Required]
         public required TradingDocumentType ErpType { get; set; }

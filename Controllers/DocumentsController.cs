@@ -29,6 +29,25 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Creates a new warehouse document.
         /// </summary>
+        /// <remarks>
+        /// Creates a new warehouse document in the system.  
+        /// The document may include details such as:  
+        ///  
+        /// - **Document Type**: Defines the type of trading transaction (e.g. WM, PM).  
+        /// - **Client ID**: ID of the customer in ERP.  
+        /// - **Product Information**: Items, quantities  
+        /// - **Related/Source Trading Document**: Links to a sales or purchase order  
+        /// - **Warehouse Location**: Storage area where the items are placed  
+        /// - **Document Status**: Assigned status after creation (`Bufor`, `Cancel`, `Confirm`, `Delete`)  
+        /// - **Additional Attributes**: Custom metadata related to the document
+        /// 
+        /// Available attributes:  
+        /// - **Status WMS**: (`Zsynchronizowane`, `W realizacji`, `Zrealizowane`)  
+        /// - **Operator WMS**: Name of the operator processing the document.  
+        /// - **Źródłowy WMS**: Source document name in WMS. 
+        /// 
+        /// If the document is successfully created, the response includes the document along with its **ERP ID**.  
+        /// </remarks>
         /// <returns>A document.</returns>
         /// <response code="200">A newly created document.</response>
         /// <response code="400">Document has invalid data.</response>
@@ -78,6 +97,19 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Modifies a warehouse document.
         /// </summary>
+        /// <remarks>
+        /// Modifies an existing warehouse document in the system.  
+        /// The user can update the document by providing its **ERP ID**.  
+        ///  
+        /// Editable fields include:  
+        /// - **Document Status**: Can be updated to (`Bufor`, `Cancel`, `Confirm`, `Delete`).  
+        /// - **Attributes**: Additional metadata or custom fields related to the document.  
+        /// 
+        /// Available attributes:  
+        /// - **Status WMS**: (`Zsynchronizowane`, `W realizacji`, `Zrealizowane`)  
+        /// - **Operator WMS**: Name of the operator processing the document.  
+        /// - **Źródłowy WMS**: Source document name in WMS. 
+        /// </remarks>
         /// <returns>A document.</returns>
         /// <response code="200">A modified document.</response>
         /// <response code="400">Document has invalid data.</response>
@@ -128,6 +160,21 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Creates a new trading document.
         /// </summary>
+        /// <remarks>
+        /// Creates a new trading document in the system.  
+        /// The document may include the following details:  
+        ///  
+        /// - **Document Type**: Defines the type of trading transaction (e.g. MMW, MMP).  
+        /// - **Warehouse Location**: Destination and Source storage area of the items.
+        /// - **Product Information**: Items, quantities.  
+        /// - **Status of the Document**: Assigned status after creation (`Bufor`, `Cancel`, `Confirm`, `Delete`).  
+        /// - **Additional Attributes**: Custom metadata related to the document.  
+        ///  
+        /// Available attributes:  
+        /// - **Status WMS**: (`Zsynchronizowane`, `W realizacji`, `Zrealizowane`)   
+        /// 
+        /// If the document is successfully created, the response includes the document along with its **ERP ID**.  
+        /// </remarks>
         /// <returns>A document.</returns>
         /// <response code="200">A newly created document.</response>
         /// <response code="400">Document has invalid data.</response>
@@ -177,6 +224,17 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Modifies a trading document.
         /// </summary>
+        /// <remarks>
+        /// Modifies an existing trading document in the system.  
+        /// The user can update the document by providing its **ERP ID**.  
+        ///  
+        /// Editable fields include:  
+        /// - **Document Status**: Can be updated to (`Bufor`, `Cancel`, `Confirm`, `Delete`).  
+        /// - **Attributes**: Additional metadata or custom fields related to the document.  
+        /// 
+        /// Available attributes:  
+        /// - **Status WMS**: (`Zsynchronizowane`, `W realizacji`, `Zrealizowane`)  
+        /// </remarks>
         /// <returns>A document.</returns>
         /// <response code="200">A modified document.</response>
         /// <response code="400">Document has invalid data.</response>

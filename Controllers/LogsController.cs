@@ -24,6 +24,19 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Gets all logs from database.
         /// </summary>
+        /// <remarks>
+        /// Retrieves all synchronization logs stored in the database.  
+        /// Supports optional filtering based on specific criteria:  
+        ///  
+        /// - **Flow**: Defines the synchronization direction  
+        ///   - `IN` → Data synchronized into ERP  
+        ///   - `OUT` → Data synchronized into WMS  
+        /// - **Success Status**: Filters logs based on whether the synchronization was successful or failed.  
+        /// - **Date Range**: Retrieves logs created on or after the specified date.  
+        ///   - Expected format: `YYYY-MM-DDTHH:mm:ss`  
+        ///  
+        /// If no logs match the specified filters, a `404 Not Found` response is returned.  
+        /// </remarks>
         /// <param name="flow">Entity synchro flow. IN - Into ERP; OUT - Into WMS (optional).</param>
         /// <param name="success">Filters logs by success status (optional).</param>
         /// <param name="dateFrom">Filters logs created on or after this date. Date must be passed in YYYY-MM-DDTHH:mm:ss format (optional).</param>
@@ -89,6 +102,17 @@ namespace APIWMS.Controllers
         /// <summary>
         /// Gets a log with specific entityId.
         /// </summary>
+        /// <remarks>
+        /// Retrieves a log entry from the database based on the provided entity ID, entity type, and source.
+        /// The log corresponds to a specific record within the system and helps track relevant events or changes.  
+        ///  
+        /// - **Entity ID** is required and uniquely identifies the record.  
+        /// - **Entity Type** is optional for WMS source, but required for ERP source.  
+        /// - **Source** specifies the system of origin (e.g., ERP or WMS).  
+        ///  
+        /// If a matching log entry is found, it is returned in the response.  
+        /// Otherwise, an appropriate error message is provided.
+        /// </remarks>
         /// <param name="entityId">ID of the Entity.</param>
         /// <param name="entityType">Type of the Entity. (optional).</param>
         /// <param name="source">Source of the entity [ERP, WMS].</param>
