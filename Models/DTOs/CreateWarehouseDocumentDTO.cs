@@ -1,5 +1,6 @@
 ﻿using APIWMS.Data.Enums;
 using APIWMS.Models.DTOs;
+using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
@@ -18,7 +19,7 @@ namespace APIWMS.Models.ViewModels
         /// Document type in WMS system
         /// </summary>
         [Required]
-        public required int WmsType { get; set; }
+        public required WMSDocumentType WmsType { get; set; }
         /// <summary>
         /// Document name in WMS system
         /// </summary>
@@ -27,7 +28,7 @@ namespace APIWMS.Models.ViewModels
         /// <summary>
         /// ERP ID - This field is only for responses, not for incoming POST requests.
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        [SwaggerSchema(ReadOnly = true)]
         public int ErpId { get; set; }
         /// <summary>
         /// Document type in ERP system

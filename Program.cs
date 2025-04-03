@@ -47,9 +47,10 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "APIWMS", Version = "v1" });
 
-    // Custom order
-    options.DocumentFilter<CustomTagOrderFilter>();
+    // Schema filters
+    options.DocumentFilter<CustomTagOrderFilter>(); // Custom order
 
+    options.EnableAnnotations();
     // XML comments
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));

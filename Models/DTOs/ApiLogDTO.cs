@@ -12,7 +12,7 @@ namespace APIWMS.Models.DTOs
         /// <summary>
         /// WMS Entity Type
         /// </summary>
-        public DocumentType EntityWmsType { get; set; }
+        public EntityType EntityWmsType { get; set; }
         /// <summary>
         /// ERP Entity Id
         /// </summary>
@@ -20,7 +20,7 @@ namespace APIWMS.Models.DTOs
         /// <summary>
         /// ERP Entity Type
         /// </summary>
-        public DocumentType EntityErpType { get; set; }
+        public EntityType EntityErpType { get; set; }
         /// <summary>
         /// Entity synchro flow. IN - Into WMS; OUT - Into ERP
         /// </summary>

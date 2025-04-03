@@ -35,13 +35,13 @@ namespace APIWMS.Services
                             log.EntityWmsId = Convert.ToInt32(field.Value);
                             break;
                         case "entitywmstype":
-                            log.EntityWmsType = (DocumentType)field.Value;
+                            log.EntityWmsType = (EntityType)field.Value;
                             break;
                         case "entityerpid":
                             log.EntityErpId = Convert.ToInt32(field.Value);
                             break;
                         case "entityerptype":
-                            log.EntityErpType = (DocumentType)field.Value;
+                            log.EntityErpType = (EntityType)field.Value;
                             break;
                     }
                 }

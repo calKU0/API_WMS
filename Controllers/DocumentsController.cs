@@ -289,12 +289,10 @@ namespace APIWMS.Controllers
             if (document is CreateWarehouseDocumentDTO createDocument)
             {
                 logFields.Add("entitywmsid", createDocument.WmsId);
-                logFields.Add("entitywmsType", createDocument.WmsType);
+                logFields.Add("entitywmsType", (int)createDocument.WmsType);
             }
             else if (document is EditWarehouseDocumentDTO editDocument)
             {
-                logFields.Add("entitywmsid", editDocument.WmsId);
-                logFields.Add("entitywmsType", editDocument.WmsType);
                 logFields.Add("entityerpid", editDocument.ErpId);
                 logFields.Add("entityerptype", (int)editDocument.ErpType);
             }
@@ -310,12 +308,12 @@ namespace APIWMS.Controllers
             if (document is CreateWarehouseDocumentDTO createDocument)
             {
                 logFields.Add("entitywmsid", createDocument.WmsId);
-                logFields.Add("entitywmsType", createDocument.WmsType);
+                logFields.Add("entitywmsType", (int)createDocument.WmsType);
+                logFields.Add("entityerpid", createDocument.ErpId);
+                logFields.Add("entityerpType", (int)createDocument.ErpType);
             }
             else if (document is EditWarehouseDocumentDTO editDocument)
             {
-                logFields.Add("entitywmsid", editDocument.WmsId);
-                logFields.Add("entitywmsType", editDocument.WmsType);
                 logFields.Add("entityerpid", editDocument.ErpId);
                 logFields.Add("entityerptype", (int)editDocument.ErpType);
             }

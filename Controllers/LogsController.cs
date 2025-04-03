@@ -129,7 +129,7 @@ namespace APIWMS.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<List<ApiLogDTO>>> GetLog(int entityId, DocumentType? entityType, string source)
+        public async Task<ActionResult<List<ApiLogDTO>>> GetLog(int entityId, EntityType? entityType, string source)
         {
             try
             {

@@ -13,9 +13,9 @@ namespace APIWMS.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public int EntityWmsId { get; set; }
-        public DocumentType EntityWmsType { get; set; }
+        public EntityType EntityWmsType { get; set; }
         public int EntityErpId { get; set; }
-        public DocumentType EntityErpType { get; set; }
+        public EntityType EntityErpType { get; set; }
         public required LogFlow Flow { get; set; }
         public bool MailSent { get; set; }
         [Required]

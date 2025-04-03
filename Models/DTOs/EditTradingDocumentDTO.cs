@@ -7,16 +7,6 @@ namespace APIWMS.Models.DTOs
     public class EditTradingDocumentDTO
     {
         /// <summary>
-        /// Document id in WMS system
-        /// </summary>
-        [Required]
-        public required int WmsId { get; set; }
-        /// <summary>
-        /// Document type in WMS system
-        /// </summary>
-        [Required]
-        public required int WmsType { get; set; }
-        /// <summary>
         /// Document id in ERP system
         /// </summary>
         [Required]
