@@ -70,7 +70,7 @@ public class DatabaseService : IDatabaseService
                     command.CommandText = "EXEC kkur.ZaktualizujJMTowaru @ProductId, @Jm, @Ean, @Weight, @Volume, @VolumeUnit, @Converter";
                     command.CommandType = CommandType.Text;
 
-                    // Add parameters
+                    // Parameters
                     command.Parameters.Add(new SqlParameter("@ProductId", ProductId));
                     command.Parameters.Add(new SqlParameter("@Jm", unit.Unit));
                     command.Parameters.Add(new SqlParameter("@Ean", unit.Ean ?? (object)DBNull.Value));

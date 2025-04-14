@@ -35,10 +35,10 @@ namespace APIWMS.Controllers
         ///  
         /// - **Document Type**: Defines the type of trading transaction (e.g. WM, PM).  
         /// - **Client ID**: ID of the customer in ERP.  
-        /// - **Product Information**: Items, quantities  
+        /// - **Product Information**: Products that will be added to document 
         /// - **Related/Source Trading Document**: Links to a sales or purchase order  
         /// - **Warehouse Location**: Storage area where the items are placed  
-        /// - **Document Status**: Assigned status after creation (`Bufor`, `Cancel`, `Confirm`, `Delete`)  
+        /// - **Document Status**: Assigned status after creation (`Bufor`, `Cancel`, `Confirm`, `Delete`). For **ZWM/AWD** can be assigned only to (`AWD_Bufor`, `AWD_Realize`, `AWD_Close`)  
         /// - **Additional Attributes**: Custom metadata related to the document
         /// 
         /// Available attributes:  
@@ -102,7 +102,9 @@ namespace APIWMS.Controllers
         /// The user can update the document by providing its **ERP ID**.  
         ///  
         /// Editable fields include:  
-        /// - **Document Status**: Can be updated to (`Bufor`, `Cancel`, `Confirm`, `Delete`).  
+        /// - **Document Status**: Can be updated to (`Bufor`, `Cancel`, `Confirm`, `Delete`). For **ZWM/AWD** can be updated only to (`AWD_Bufor`, `AWD_Realize`, `AWD_Close`)
+        /// - **Products to add**: Products that will be added to document (Document must be in Bufor when adding)
+        /// - **Products realization (for AWD and ZWM only)**: Positions that are being realized on document.
         /// - **Attributes**: Additional metadata or custom fields related to the document.  
         /// 
         /// Available attributes:  
@@ -123,12 +125,18 @@ namespace APIWMS.Controllers
         [HttpPost]
         public async Task<ActionResult<EditWarehouseDocumentDTO>> EditWarehouseDocument(EditWarehouseDocumentDTO document)
         {
-            const string action = "EditWarehouseDocument";
-
             if (!ModelState.IsValid)
             {
-                await LogErrorAsync(action, "Invalid model structure passed.", document);
                 return BadRequest(ModelState);
+            }
+
+            const string action = "EditWarehouseDocument";
+
+            if (document.PositionsToRealize != null && document.PositionsToRealize.Any() && document.Status == null)
+            {
+                string errorMessage = $"Document Status must be passed when passing PositionsToRealize";
+                await LogErrorAsync(action, errorMessage, document);
+                return BadRequest(new { Message = errorMessage });
             }
 
             if (!Enum.IsDefined(typeof(WarehouseDocumentType), document.ErpType))

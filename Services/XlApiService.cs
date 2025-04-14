@@ -90,7 +90,7 @@ namespace APIWMS.Services
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
-                _logger.LogInformation($"Added product {product.Code} to document {document.WmsName}.");
+                _logger.LogInformation($"Added product {product.ProductCode} to document {document.WmsName}.");
             }
 
             if (document.Attributes?.Count >= 1)
@@ -148,6 +148,34 @@ namespace APIWMS.Services
                     return errorMessage;
                 }
 
+                if (document.PositionsToRealize?.Count > 0)
+                {
+                    foreach (var product in document.PositionsToRealize)
+                    {
+                        int addRealizationResult = AddProductRealizationToWareHouseDocument(documentId, product);
+                        if (addRealizationResult != 0)
+                        {
+                            errorMessage = CheckError((int)ErrorCode.RealizujPozycjeMag, addRealizationResult);
+                            ManageTransaction(2); // Zamykamy transakcje
+                            return errorMessage;
+                        }
+                    }
+                }
+
+                if (document.PositionsToAdd?.Count > 0)
+                {
+                    foreach (var position in document.PositionsToAdd)
+                    {
+                        int addProductResult = AddProductToWarehouseDocument(documentId, position);
+                        if (addProductResult != 0)
+                        {
+                            errorMessage = CheckError((int)ErrorCode.DodajPozycjeMag, addProductResult);
+                            ManageTransaction(2); // Zamykamy transakcje
+                            return errorMessage;
+                        }
+                    }
+                }
+
                 int closeDocResult = CloseWarehouseDocument(documentId, document.ErpType, document.Status);
                 if (closeDocResult != 0)
                 {
@@ -155,6 +183,7 @@ namespace APIWMS.Services
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
+
                 ManageTransaction(1); // Potwierdzamy transakcje
                 _logger.LogInformation($"Updated document status ERPID: {document.ErpId}");
             }
@@ -189,11 +218,25 @@ namespace APIWMS.Services
             {
                 Wersja = _config.ApiVersion,
                 Ilosc = product.Quantity,
-                TowarKod = product.Code,
+                TowarKod = product.ProductCode,
                 JmZ = product.Unit
             };
 
             int result = cdn_api.cdn_api.XLDodajPozycjeMag(documentId, xLDokumentMagElem);
+            product.ProductLp = xLDokumentMagElem.GIDLp;
+            return result;
+        }
+
+        private int AddProductRealizationToWareHouseDocument(int documentId, PositionsToRealizeDTO product)
+        {
+            XLRealizujPozycjeMagInfo_20241 xLRealizujPozycje = new XLRealizujPozycjeMagInfo_20241()
+            {
+                Wersja = _config.ApiVersion,
+                EleLp = product.ProductLp,
+                Ilosc = product.Quantity,
+            };
+
+            int result = cdn_api.cdn_api.XLRealizujPozycjeMag(documentId, xLRealizujPozycje);
             return result;
         }
 
@@ -216,15 +259,17 @@ namespace APIWMS.Services
             return result;
         }
 
-        private int CloseWarehouseDocument(int documentId, WarehouseDocumentType type, DocumentStatus? status)
+        private int CloseWarehouseDocument(int documentId, WarehouseDocumentType type, DocumentStatus? status = null)
         {
             int result = -1;
+            XLZamkniecieDokumentuMagInfo_20241 xLZamkniecieDokumentuMag = new();
+            xLZamkniecieDokumentuMag.Wersja = _config.ApiVersion;
 
-            XLZamkniecieDokumentuMagInfo_20241 xLZamkniecieDokumentuMag = new()
+            if (status is not null)
             {
-                Wersja = _config.ApiVersion,
-                Tryb = (int)status
-            };
+                xLZamkniecieDokumentuMag.Tryb = (int)status;
+            }
+
             result = cdn_api.cdn_api.XLZamknijDokumentMag(documentId, xLZamkniecieDokumentuMag);
 
             return result;
@@ -269,7 +314,7 @@ namespace APIWMS.Services
                     ManageTransaction(2); // Zamykamy transakcje
                     return errorMessage;
                 }
-                _logger.LogInformation($"Added product {product.Code} to document {document.WmsName}.");
+                _logger.LogInformation($"Added product {product.ProductCode} to document {document.WmsName}.");
             }
 
             if (document.Attributes?.Count >= 1)
@@ -358,7 +403,7 @@ namespace APIWMS.Services
             {
                 Wersja = _config.ApiVersion,
                 Ilosc = product.Quantity,
-                TowarKod = product.Code,
+                TowarKod = product.ProductCode,
                 JmZ = product.Unit
             };
 

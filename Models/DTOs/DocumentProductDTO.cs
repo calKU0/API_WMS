@@ -1,14 +1,21 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Swashbuckle.AspNetCore.Annotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace APIWMS.Models.DTOs
 {
     public class DocumentProductDTO
     {
+
+        [SwaggerSchema(ReadOnly = true)]
+        /// <summary>
+        /// Product no on document
+        /// </summary>
+        public int ProductLp { get; set; }
         /// <summary>
         /// Product code
         /// </summary>
         [Required]
-        public required string Code { get; set; }
+        public required string ProductCode { get; set; }
         /// <summary>
         /// Product quantity
         /// </summary>
