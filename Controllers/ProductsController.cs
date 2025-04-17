@@ -37,6 +37,7 @@ namespace APIWMS.Controllers
         /// - **Wysokość magazynowa (cm)**: Height of the product’s base unit. 
         /// - **Długość magazynowa (cm)**: Length of the product’s base unit.  
         /// - **Szerokość magazynowa (cm)**: Width of the product’s base unit. 
+        /// - **Grupa WMS**: Specifies the WMS group.
         /// - **Przenośnik taśmowy** (`TAK`, `NIE`): Specifies whether the product should be packed on a pallet (`NO`) or in packages (`YES`).
         /// - **Typ towaru pack** (`Standardowy`, `Niestandardowy`, `Długi do 2mb`, `Długi do 3mb`, `Gabarytowy`, `Delikatny`, `Paletowy`, `Pół-paletowy`, `Standardowy/Nieokreslony`)
         /// 
